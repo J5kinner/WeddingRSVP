@@ -1,0 +1,30 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+// RSVP model for tracking wedding guests
+model RSVP {
+  id              String   @id @default(cuid())
+  name            String   // Guest name
+  email           String   @unique // Email address
+  attending       Boolean  // true = attending, false = not attending
+  numberOfGuests  Int      @default(1) // Number of people attending
+  dietaryNotes    String?  // Dietary restrictions or special requests
+  message         String?  // Optional message from the guest
+  respondedAt     DateTime @default(now()) // When they submitted their RSVP
+  updatedAt       DateTime @updatedAt
+
+  @@map("rsvps")
+  @@index([email])
+  @@index([attending])
+}
+
