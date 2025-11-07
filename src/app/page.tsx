@@ -15,7 +15,6 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* RSVP Form */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
               Submit Your RSVP
@@ -23,7 +22,6 @@ export default function Home() {
             <RSVPForm />
           </div>
 
-          {/* RSVP List */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
               RSVP Responses

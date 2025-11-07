@@ -44,7 +44,6 @@ export default function RSVPForm() {
       if (response.ok) {
         setSubmitStatus('success')
         setSubmitMessage('Thank you for your RSVP!')
-        // Reset form
         setFormData({
           name: '',
           email: '',
@@ -53,7 +52,6 @@ export default function RSVPForm() {
           dietaryNotes: '',
           message: '',
         })
-        // Refresh the page to show updated list
         setTimeout(() => window.location.reload(), 1500)
       } else {
         setSubmitStatus('error')

@@ -14,10 +14,12 @@ interface RSVP {
   updatedAt: string
 }
 
-// Format date consistently to avoid hydration mismatches
+/**
+ * Formats date consistently to prevent hydration mismatches
+ * between server and client rendering.
+ */
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
-  // Use a consistent format that works the same on server and client
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -50,7 +52,6 @@ export default function RSVPList() {
     }
   }
 
-  // Prevent hydration mismatch by not rendering until mounted
   if (!mounted || loading) {
     return <div className="text-center py-8 text-gray-500">Loading RSVPs...</div>
   }

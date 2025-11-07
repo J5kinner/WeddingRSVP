@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { neon } from '@neondatabase/serverless'
 
-// Use Neon's serverless driver directly - works better than Prisma on macOS
 const sql = neon(process.env.DATABASE_URL!)
 
-// GET - Fetch all RSVPs
 export async function GET() {
   try {
     const rsvps = await sql`
@@ -21,13 +19,15 @@ export async function GET() {
   }
 }
 
-// POST - Create a new RSVP  
+/**
+ * Creates or updates an RSVP entry.
+ * Uses PostgreSQL UPSERT to handle duplicate emails by updating existing records.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { name, email, attending, numberOfGuests, dietaryNotes, message } = body
 
-    // Validate required fields
     if (!name || !email || attending === undefined) {
       return NextResponse.json(
         { error: 'Name, email, and attending status are required' },
@@ -35,7 +35,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use upsert to handle both insert and update
     const result = await sql`
       INSERT INTO rsvps (id, name, email, attending, "numberOfGuests", "dietaryNotes", message, "respondedAt", "updatedAt")
       VALUES (gen_random_uuid()::text, ${name}, ${email}, ${attending}, ${numberOfGuests || 1}, ${dietaryNotes || null}, ${message || null}, NOW(), NOW())

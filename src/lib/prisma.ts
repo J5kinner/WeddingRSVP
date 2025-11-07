@@ -12,6 +12,3 @@ export const prisma =
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
 
-// Don't explicitly connect - let Prisma connect lazily on first query
-// This works better with Neon's serverless architecture
-
