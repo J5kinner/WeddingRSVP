@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+/**
+ * RSVP model for tracking wedding guest responses.
+ * Uses email as unique identifier to prevent duplicate entries.
+ */
+model RSVP {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  attending       Boolean
+  numberOfGuests  Int      @default(1)
+  dietaryNotes    String?
+  message         String?
+  respondedAt     DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("rsvps")
+  @@index([email])
+  @@index([attending])
+}
+

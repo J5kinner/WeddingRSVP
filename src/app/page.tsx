@@ -1,0 +1,35 @@
+import RSVPForm from './components/RSVPForm'
+import RSVPList from './components/RSVPList'
+
+export default function Home() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Wedding RSVP
+          </h1>
+          <p className="text-lg text-gray-600">
+            Please let us know if you'll be joining us for our special day!
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Submit Your RSVP
+            </h2>
+            <RSVPForm />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              RSVP Responses
+            </h2>
+            <RSVPList />
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
