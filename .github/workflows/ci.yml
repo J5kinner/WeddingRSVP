@@ -28,8 +28,9 @@ jobs:
       - name: Install deps
         run: pnpm install
 
-      - name: Set DATABASE_URL environment variable (if not already set)
-        run: export DATABASE_URL=${{ secrets.DATABASE_URL }}
+      # Prisma sanity
+      - name: Set DATABASE_URL environment variable
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
 
       - name: Prisma format + generate + validate
         run: |
