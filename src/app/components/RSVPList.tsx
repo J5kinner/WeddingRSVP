@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { sanitizeHTML } from '@/lib/security'
 
 interface RSVP {
   id: string
@@ -107,7 +108,7 @@ export default function RSVPList() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-semibold text-gray-900">{rsvp.name}</h4>
+                      <h4 className="font-semibold text-gray-900">{sanitizeHTML(rsvp.name)}</h4>
                       <span
                         className={`text-xs px-2 py-1 rounded ${
                           rsvp.attending
@@ -118,7 +119,7 @@ export default function RSVPList() {
                         {rsvp.attending ? 'Attending' : 'Not Attending'}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mb-2">{rsvp.email}</p>
+                    <p className="text-sm text-gray-600 mb-2">{sanitizeHTML(rsvp.email)}</p>
                     {rsvp.attending && (
                       <p className="text-sm text-gray-700 mb-1">
                         <span className="font-medium">Guests:</span> {rsvp.numberOfGuests}
@@ -126,7 +127,7 @@ export default function RSVPList() {
                     )}
                     {rsvp.dietaryNotes && (
                       <p className="text-sm text-gray-700 mb-1">
-                        <span className="font-medium">Dietary Notes:</span> {rsvp.dietaryNotes}
+                        <span className="font-medium">Dietary Notes:</span> {sanitizeHTML(rsvp.dietaryNotes)}
                       </p>
                     )}
                     {rsvp.message && (

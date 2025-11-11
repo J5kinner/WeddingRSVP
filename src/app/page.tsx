@@ -1,4 +1,4 @@
-import RSVPForm from './components/RSVPForm'
+import SecureRSVPForm from './components/SecureRSVPForm'
 import RSVPList from './components/RSVPList'
 
 export default function Home() {
@@ -19,7 +19,7 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-gray-900 mb-6">
               Submit Your RSVP
             </h2>
-            <RSVPForm />
+            <SecureRSVPForm />
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-8">
