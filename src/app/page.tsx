@@ -1,10 +1,9 @@
 import SecureRSVPForm from './components/SecureRSVPForm'
-import RSVPList from './components/RSVPList'
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
-      <main className="max-w-6xl mx-auto">
+      <main className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
             Wedding RSVP
@@ -14,21 +13,20 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              Submit Your RSVP
-            </h2>
-            <SecureRSVPForm />
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
-              RSVP Responses
-            </h2>
-            <RSVPList />
-          </div>
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+            Submit Your RSVP
+          </h2>
+          <SecureRSVPForm />
         </div>
+
+        <p className="text-sm text-center text-gray-500 mt-6">
+          Admin? Visit the{' '}
+          <a className="font-semibold text-indigo-600 hover:underline" href="/admin">
+            RSVP responses dashboard
+          </a>
+          .
+        </p>
       </main>
     </div>
   )
