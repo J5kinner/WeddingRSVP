@@ -11,21 +11,35 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl)
 
+type RawRSVPRow = {
+  id: string
+  name: string
+  email: string
+  attending: boolean
+  numberOfGuests: number
+  dietaryNotes: string | null
+  message: string | null
+  respondedAt: string | Date
+  updatedAt: string | Date
+}
+
 async function getRSVPs(): Promise<RSVP[]> {
-  const rows = await sql<RSVP[]>`
+  const rows = (await sql`
     SELECT * FROM rsvps
     ORDER BY "respondedAt" DESC
-  `
+  `) as unknown as RawRSVPRow[]
 
-  return rows.map((row) => ({
-    ...row,
-    respondedAt:
-      row.respondedAt instanceof Date
-        ? row.respondedAt.toISOString()
-        : row.respondedAt,
-    updatedAt:
-      row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
-  }))
+  return rows.map(
+    (row): RSVP => ({
+      ...row,
+      respondedAt:
+        row.respondedAt instanceof Date
+          ? row.respondedAt.toISOString()
+          : row.respondedAt,
+      updatedAt:
+        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
+    })
+  )
 }
 
 export default async function AdminPage() {
