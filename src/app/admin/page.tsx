@@ -1,6 +1,7 @@
 import RSVPList from '@/app/components/RSVPList'
 import { neon } from '@neondatabase/serverless'
 import AdminGuestForm from './AdminGuestForm'
+import AdminCsvImport from './AdminCsvImport'
 import type { InviteResponse } from '@/types/rsvp'
 
 export const dynamic = 'force-dynamic'
@@ -114,8 +115,9 @@ export default async function AdminPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AdminCsvImport />
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Add Guest</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Add Single Guest</h2>
             <p className="text-sm text-gray-600 mb-4">
               Create a new invite and guest record directly in the database.
             </p>
