@@ -1,5 +1,7 @@
-import RSVPList, { type RSVP } from '@/app/components/RSVPList'
+import RSVPList from '@/app/components/RSVPList'
 import { neon } from '@neondatabase/serverless'
+import AdminGuestForm from './AdminGuestForm'
+import type { InviteResponse } from '@/types/rsvp'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,39 +13,87 @@ if (!databaseUrl) {
 
 const sql = neon(databaseUrl)
 
-type RawRSVPRow = {
-  id: string
-  name: string
-  email: string
-  attending: boolean
-  numberOfGuests: number
-  dietaryNotes: string | null
+type RawInviteRow = {
+  inviteId: string
+  inviteCode: string
   message: string | null
-  respondedAt: string | Date
-  updatedAt: string | Date
+  inviteCreatedAt: string | Date
+  inviteUpdatedAt: string | Date
+  guestId: string | null
+  guestName: string | null
+  guestStatus: boolean | null
+  guestDietNotes: string | null
+  guestCreatedAt: string | Date | null
+  guestUpdatedAt: string | Date | null
 }
 
-async function getRSVPs(): Promise<RSVP[]> {
-  const rows = (await sql`
-    SELECT * FROM rsvps
-    ORDER BY "respondedAt" DESC
-  `) as unknown as RawRSVPRow[]
+function mapInviteRows(rows: RawInviteRow[]): InviteResponse[] {
+  const inviteMap = new Map<string, InviteResponse>()
 
-  return rows.map(
-    (row): RSVP => ({
-      ...row,
-      respondedAt:
-        row.respondedAt instanceof Date
-          ? row.respondedAt.toISOString()
-          : row.respondedAt,
-      updatedAt:
-        row.updatedAt instanceof Date ? row.updatedAt.toISOString() : row.updatedAt,
-    })
-  )
+  rows.forEach((row) => {
+    if (!inviteMap.has(row.inviteId)) {
+      inviteMap.set(row.inviteId, {
+        id: row.inviteId,
+        inviteCode: row.inviteCode,
+        message: row.message,
+        createdAt:
+          row.inviteCreatedAt instanceof Date
+            ? row.inviteCreatedAt.toISOString()
+            : row.inviteCreatedAt,
+        updatedAt:
+          row.inviteUpdatedAt instanceof Date
+            ? row.inviteUpdatedAt.toISOString()
+            : row.inviteUpdatedAt,
+        guests: []
+      })
+    }
+
+    if (row.guestId) {
+      const invite = inviteMap.get(row.inviteId)!
+      invite.guests.push({
+        id: row.guestId,
+        name: row.guestName || '',
+        status: Boolean(row.guestStatus),
+        dietNotes: row.guestDietNotes,
+        createdAt:
+          row.guestCreatedAt instanceof Date
+            ? row.guestCreatedAt.toISOString()
+            : (row.guestCreatedAt || ''),
+        updatedAt:
+          row.guestUpdatedAt instanceof Date
+            ? row.guestUpdatedAt.toISOString()
+            : (row.guestUpdatedAt || '')
+      })
+    }
+  })
+
+  return Array.from(inviteMap.values())
+}
+
+async function getRSVPs(): Promise<InviteResponse[]> {
+  const rows = (await sql`
+    SELECT 
+      i.id as "inviteId",
+      i."inviteCode",
+      i.message,
+      i."createdAt" as "inviteCreatedAt",
+      i."updatedAt" as "inviteUpdatedAt",
+      g.id as "guestId",
+      g.name as "guestName",
+      g.status as "guestStatus",
+      g."dietNotes" as "guestDietNotes",
+      g."createdAt" as "guestCreatedAt",
+      g."updatedAt" as "guestUpdatedAt"
+    FROM invites i
+    LEFT JOIN guests g ON g."inviteId" = i.id
+    ORDER BY i."updatedAt" DESC, g."createdAt" ASC
+  `) as unknown as RawInviteRow[]
+
+  return mapInviteRows(rows)
 }
 
 export default async function AdminPage() {
-  let rsvps: RSVP[] = []
+  let rsvps: InviteResponse[] = []
   let error: string | null = null
 
   try {
@@ -63,12 +113,23 @@ export default async function AdminPage() {
           </p>
         </div>
 
-        <div className="bg-white rounded-xl shadow-lg p-8">
-          {error ? (
-            <p className="text-center text-red-600">{error}</p>
-          ) : (
-            <RSVPList rsvps={rsvps} />
-          )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Add Guest</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Create a new invite and guest record directly in the database.
+            </p>
+            <AdminGuestForm />
+          </div>
+
+          <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-1">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">All Responses</h2>
+            {error ? (
+              <p className="text-center text-red-600">{error}</p>
+            ) : (
+              <RSVPList rsvps={rsvps} />
+            )}
+          </div>
         </div>
       </main>
     </div>

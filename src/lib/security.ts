@@ -6,11 +6,21 @@
 
 interface RawRSVPFormData {
   name?: unknown;
-  email?: unknown;
   attending?: unknown;
-  numberOfGuests?: unknown;
   dietaryNotes?: unknown;
   message?: unknown;
+  additionalGuests?: unknown;
+}
+
+export interface AdditionalGuest {
+  name: string;
+  dietaryNotes: string;
+}
+
+export interface SanitizedGuest {
+  name: string;
+  dietNotes: string;
+  status: boolean;
 }
 
 
@@ -20,29 +30,14 @@ export const VALIDATION_CONFIG = {
     pattern: /^[a-zA-Z\s\-\'\.]+$/,
     errorMessage: 'Name can only contain letters, spaces, hyphens, apostrophes, and periods'
   },
-  email: {
-    maxLength: 255,
-    pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-    blockedDomains: [
-      '10minutemail.com',
-      'tempmail.org', 
-      'guerrillamail.com',
-      'mailinator.com',
-      'throwaway.email',
-      'yopmail.com',
-      'disposable.email',
-      'temp-mail.org'
-    ],
-    errorMessage: 'Please provide a valid email address'
-  },
-  numberOfGuests: {
+  guestCount: {
     min: 1,
     max: 20,
-    errorMessage: 'Number of guests must be between 1 and 20'
+    errorMessage: 'You can RSVP up to 20 guests including yourself'
   },
   dietaryNotes: {
     maxLength: 500,
-    allowedChars: /^[a-zA-Z0-9\s\-\,\.\(\)]+$/,
+    allowedChars: /^[a-zA-Z0-9\s\-\:\;\'\,\.\/\(\)&]+$/,
     errorMessage: 'Dietary notes contain invalid characters'
   },
   message: {
@@ -79,16 +74,6 @@ export function sanitizeHTML(input: string): string {
     .replace(/\//g, '&#x2F;');
 }
 
-export function validateEmailDomain(email: string): boolean {
-  const domain = email.split('@')[1]?.toLowerCase();
-  if (!domain) return false;
-  
-  return !VALIDATION_CONFIG.email.blockedDomains.some(blocked => 
-    domain.includes(blocked) || domain === blocked
-  );
-}
-
-
 export function validateName(name: string): { isValid: boolean; error?: string } {
   const sanitized = sanitizeInput(name);
   
@@ -105,46 +90,6 @@ export function validateName(name: string): { isValid: boolean; error?: string }
   
   if (!VALIDATION_CONFIG.name.pattern.test(sanitized)) {
     return { isValid: false, error: VALIDATION_CONFIG.name.errorMessage };
-  }
-  
-  return { isValid: true };
-}
-
-export function validateEmail(email: string): { isValid: boolean; error?: string } {
-  const sanitized = sanitizeInput(email).toLowerCase();
-  
-  if (!sanitized) {
-    return { isValid: false, error: 'Email is required' };
-  }
-  
-  if (sanitized.length > VALIDATION_CONFIG.email.maxLength) {
-    return { 
-      isValid: false, 
-      error: `Email must be less than ${VALIDATION_CONFIG.email.maxLength} characters` 
-    };
-  }
-  
-  if (!VALIDATION_CONFIG.email.pattern.test(sanitized)) {
-    return { isValid: false, error: VALIDATION_CONFIG.email.errorMessage };
-  }
-  
-  if (!validateEmailDomain(sanitized)) {
-    return { isValid: false, error: 'Please use a permanent email address' };
-  }
-  
-  return { isValid: true };
-}
-
-export function validateNumberOfGuests(guests: number): { isValid: boolean; error?: string } {
-  if (!Number.isInteger(guests)) {
-    return { isValid: false, error: 'Number of guests must be a whole number' };
-  }
-  
-  if (guests < VALIDATION_CONFIG.numberOfGuests.min || guests > VALIDATION_CONFIG.numberOfGuests.max) {
-    return { 
-      isValid: false, 
-      error: VALIDATION_CONFIG.numberOfGuests.errorMessage 
-    };
   }
   
   return { isValid: true };
@@ -198,39 +143,44 @@ export interface RSVPValidationResult {
   errors: Record<string, string>;
   sanitizedData: {
     name: string;
-    email: string;
     attending: boolean;
-    numberOfGuests: number;
     dietaryNotes: string;
     message: string;
+    additionalGuests: AdditionalGuest[];
+    guests: SanitizedGuest[];
   };
 }
 
 export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
   const errors: Record<string, string> = {};
+  const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1;
+
+  const rawAdditionalGuestCount = Array.isArray(data.additionalGuests) ? data.additionalGuests.length : 0
+
+  const sanitizedAdditionalGuests: AdditionalGuest[] = Array.isArray(data.additionalGuests)
+    ? data.additionalGuests
+        .slice(0, MAX_ADDITIONAL_GUESTS)
+        .map((guest) => {
+          const safeGuest = typeof guest === 'object' && guest !== null ? guest as Record<string, unknown> : {};
+          const name = sanitizeInput(typeof safeGuest.name === 'string' ? safeGuest.name : '');
+          const dietaryNotes = sanitizeInput(typeof safeGuest.dietaryNotes === 'string' ? safeGuest.dietaryNotes : '');
+
+          return { name, dietaryNotes };
+        })
+    : [];
+
   const sanitizedData = {
     name: sanitizeInput(typeof data.name === 'string' ? data.name : ''),
-    email: sanitizeInput(typeof data.email === 'string' ? data.email : '').toLowerCase(),
     attending: Boolean(data.attending),
-    numberOfGuests: Math.max(1, Math.min(20, typeof data.numberOfGuests === 'number' ? data.numberOfGuests : parseInt(String(data.numberOfGuests || 1)))),
     dietaryNotes: sanitizeInput(typeof data.dietaryNotes === 'string' ? data.dietaryNotes : ''),
-    message: sanitizeInput(typeof data.message === 'string' ? data.message : '')
+    message: sanitizeInput(typeof data.message === 'string' ? data.message : ''),
+    additionalGuests: sanitizedAdditionalGuests,
+    guests: [] as SanitizedGuest[]
   };
-
 
   const nameValidation = validateName(sanitizedData.name);
   if (!nameValidation.isValid) {
     errors.name = nameValidation.error!;
-  }
-
-  const emailValidation = validateEmail(sanitizedData.email);
-  if (!emailValidation.isValid) {
-    errors.email = emailValidation.error!;
-  }
-
-  const guestsValidation = validateNumberOfGuests(sanitizedData.numberOfGuests);
-  if (!guestsValidation.isValid) {
-    errors.numberOfGuests = guestsValidation.error!;
   }
 
   const dietaryValidation = validateDietaryNotes(sanitizedData.dietaryNotes);
@@ -242,6 +192,54 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
   if (!messageValidation.isValid) {
     errors.message = messageValidation.error!;
   }
+
+  const guestErrors: string[] = [];
+
+  sanitizedAdditionalGuests.forEach((guest, index) => {
+    if (!guest.name) {
+      guestErrors.push(`Guest ${index + 1} name is required`);
+    } else {
+      const guestNameValidation = validateName(guest.name);
+      if (!guestNameValidation.isValid) {
+        guestErrors.push(`Guest ${index + 1}: ${guestNameValidation.error}`);
+      }
+    }
+
+    const guestDietValidation = validateDietaryNotes(guest.dietaryNotes);
+    if (!guestDietValidation.isValid) {
+      guestErrors.push(`Guest ${index + 1}: ${guestDietValidation.error}`);
+    }
+  });
+
+  if (!sanitizedData.attending && sanitizedAdditionalGuests.length > 0) {
+    guestErrors.push('Additional guests can only be added when attending');
+    sanitizedData.additionalGuests = [];
+  }
+
+  if (rawAdditionalGuestCount > MAX_ADDITIONAL_GUESTS) {
+    guestErrors.push(VALIDATION_CONFIG.guestCount.errorMessage);
+  }
+
+  if (guestErrors.length > 0) {
+    errors.additionalGuests = guestErrors[0];
+  }
+
+  sanitizedData.guests = [
+    {
+      name: sanitizedData.name,
+      dietNotes: sanitizedData.dietaryNotes,
+      status: sanitizedData.attending
+    },
+    ...(
+      sanitizedData.attending
+        ? sanitizedData.additionalGuests.map((guest) => ({
+            name: guest.name,
+            dietNotes: guest.dietaryNotes,
+            status: true
+          }))
+        : []
+    )
+  ];
 
   return {
     isValid: Object.keys(errors).length === 0,
@@ -268,7 +266,7 @@ export function createSafeErrorMessage(originalError: unknown): string {
   console.error('RSVP Error:', originalError);
   
   if (error.includes('duplicate') || error.includes('unique')) {
-    return 'This email has already been used for an RSVP';
+    return 'This invite already exists. Please use your existing link.';
   }
   
   if (error.includes('connection') || error.includes('database')) {
