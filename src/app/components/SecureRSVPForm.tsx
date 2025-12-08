@@ -1,35 +1,30 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { validateRSVPData, sanitizeHTML } from '@/lib/security'
+import { VALIDATION_CONFIG, validateRSVPData, sanitizeHTML } from '@/lib/security'
+import type { AdditionalGuest } from '@/lib/security'
 import { csrfProtector } from '@/lib/csrf'
 
-interface FormErrors {
-  name?: string;
-  email?: string;
-  attending?: string;
-  numberOfGuests?: string;
-  dietaryNotes?: string;
-  message?: string;
-}
+const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1
+
+type FormField = keyof FormData | 'additionalGuests'
+type FormErrors = Partial<Record<FormField, string>>
 
 interface FormData {
   name: string;
-  email: string;
   attending: boolean;
-  numberOfGuests: number;
   dietaryNotes: string;
   message: string;
+  additionalGuests: AdditionalGuest[];
 }
 
 export default function SecureRSVPForm() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    email: '',
     attending: true,
-    numberOfGuests: 1,
     dietaryNotes: '',
     message: '',
+    additionalGuests: [],
   })
   const [csrfToken, setCsrfToken] = useState<string>('')
   const [formErrors, setFormErrors] = useState<FormErrors>({})
@@ -55,8 +50,8 @@ export default function SecureRSVPForm() {
   }, [])
 
   // Debounced validation to avoid excessive validation calls
-  const validateField = useCallback((fieldName: keyof FormData, value: unknown) => {
-    const validationData = { ...formData, [fieldName]: value }
+  const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
+    const validationData = { ...currentData, [fieldName]: value }
     const result = validateRSVPData(validationData)
     
     const fieldError = result.errors[fieldName]
@@ -79,6 +74,58 @@ export default function SecureRSVPForm() {
     if (value && (formErrors[field] || value.toString().length > 2)) {
       validateField(field, value)
     }
+  }
+
+  const handleAttendingChange = (value: boolean) => {
+    const updatedData = {
+      ...formData,
+      attending: value,
+      additionalGuests: value ? formData.additionalGuests : []
+    }
+
+    setFormData(updatedData)
+    setFormErrors(prev => ({
+      ...prev,
+      attending: '',
+      additionalGuests: ''
+    }))
+
+    validateField('attending', value, updatedData)
+  }
+
+  const handleAddGuest = () => {
+    if (formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS) {
+      return
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      additionalGuests: [...prev.additionalGuests, { name: '', dietaryNotes: '' }]
+    }))
+
+    setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
+  }
+
+  const handleGuestChange = (index: number, field: keyof AdditionalGuest, value: string) => {
+    const updatedGuests = formData.additionalGuests.map((guest, guestIndex) => 
+      guestIndex === index ? { ...guest, [field]: value } : guest
+    )
+
+    setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
+    
+    if (formErrors.additionalGuests) {
+      setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
+    }
+
+    if (value && (formErrors.additionalGuests || value.length > 1)) {
+      validateField('additionalGuests', updatedGuests, { ...formData, additionalGuests: updatedGuests })
+    }
+  }
+
+  const handleRemoveGuest = (index: number) => {
+    const updatedGuests = formData.additionalGuests.filter((_, guestIndex) => guestIndex !== index)
+    setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
+    validateField('additionalGuests', updatedGuests, { ...formData, additionalGuests: updatedGuests })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,11 +162,10 @@ export default function SecureRSVPForm() {
         setSubmitMessage('Thank you for your RSVP!')
         setFormData({
           name: '',
-          email: '',
           attending: true,
-          numberOfGuests: 1,
           dietaryNotes: '',
           message: '',
+          additionalGuests: [],
         })
         setTimeout(() => window.location.reload(), 1500)
       } else {
@@ -140,7 +186,9 @@ export default function SecureRSVPForm() {
     { value: false, label: 'Sorry, can\'t make it', description: 'We understand, but we\'ll miss you!' }
   ]
 
-  const guestOptions = Array.from({ length: 20 }, (_, i) => i + 1)
+  const totalGuests = formData.attending ? formData.additionalGuests.length + 1 : 0
+  const hasReachedGuestLimit = formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS
+  const dietaryLength = formData.dietaryNotes.trim().length
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -171,36 +219,6 @@ export default function SecureRSVPForm() {
         </p>
       </div>
 
-      {/* Email Field */}
-      <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-          Email * <span className="text-xs text-gray-500">(255 character limit)</span>
-        </label>
-        <input
-          type="email"
-          id="email"
-          required
-          value={formData.email}
-          onChange={(e) => handleInputChange('email', e.target.value)}
-          maxLength={255}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
-            formErrors.email 
-              ? 'border-red-500 focus:ring-red-200' 
-              : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-          }`}
-          placeholder="your@email.com"
-        />
-        {formErrors.email && (
-          <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.email)}</p>
-        )}
-        <p className="text-gray-500 text-xs mt-1">
-          {formData.email.length}/255 characters
-        </p>
-        <p className="text-gray-400 text-xs mt-1">
-          Please use your permanent email address
-        </p>
-      </div>
-
       {/* Attending Field */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-3">
@@ -220,7 +238,7 @@ export default function SecureRSVPForm() {
                 type="radio"
                 name="attending"
                 checked={formData.attending === option.value}
-                onChange={() => handleInputChange('attending', option.value)}
+                onChange={() => handleAttendingChange(option.value)}
                 className="mt-0.5 text-blue-600 focus:ring-blue-500"
               />
               <div className="flex-1">
@@ -238,36 +256,93 @@ export default function SecureRSVPForm() {
       {/* Conditional Fields for Attending Guests */}
       {formData.attending && (
         <>
-          {/* Number of Guests */}
-          <div>
-            <label htmlFor="numberOfGuests" className="block text-sm font-medium text-gray-700 mb-1">
-              Number of Guests *
-            </label>
-            <select
-              id="numberOfGuests"
-              value={formData.numberOfGuests}
-              onChange={(e) => handleInputChange('numberOfGuests', parseInt(e.target.value))}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
-                formErrors.numberOfGuests 
-                  ? 'border-red-500 focus:ring-red-200' 
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-              }`}
-            >
-              {guestOptions.map((num) => (
-                <option key={num} value={num}>
-                  {num} {num === 1 ? 'guest' : 'guests'}
-                </option>
-              ))}
-            </select>
-            {formErrors.numberOfGuests && (
-              <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.numberOfGuests)}</p>
+          {/* Additional Guests */}
+          <div className="space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Add guests
+                </label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Share names and dietary needs for anyone attending with you.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddGuest}
+                disabled={hasReachedGuestLimit}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span className="text-lg mr-2">+</span>
+                Add guest
+              </button>
+            </div>
+            {formErrors.additionalGuests && (
+              <p className="text-red-600 text-sm">{sanitizeHTML(formErrors.additionalGuests)}</p>
             )}
+            {formData.additionalGuests.length === 0 && (
+              <div className="border border-dashed border-gray-300 rounded-lg p-4 text-sm text-gray-600 bg-gray-50">
+                No additional guests yet. Click &quot;Add guest&quot; to include family or friends.
+              </div>
+            )}
+            <div className="space-y-3">
+              {formData.additionalGuests.map((guest, index) => (
+                <div key={`${guest.name}-${index}`} className="border rounded-lg p-4 bg-white shadow-sm space-y-3">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">Guest {index + 1}</p>
+                      <p className="text-xs text-gray-500">Provide their name and dietary needs.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGuest(index)}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Guest name *
+                      </label>
+                      <input
+                        type="text"
+                        value={guest.name}
+                        onChange={(e) => handleGuestChange(index, 'name', e.target.value)}
+                        maxLength={100}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Guest name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Dietary needs or notes
+                      </label>
+                      <input
+                        type="text"
+                        value={guest.dietaryNotes}
+                        onChange={(e) => handleGuestChange(index, 'dietaryNotes', e.target.value)}
+                        maxLength={120}
+                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Vegetarian, gluten-free, allergies, etc."
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-gray-600">
+              Total guests (including you): <span className="font-semibold text-gray-900">{totalGuests}</span>{' '}
+              {hasReachedGuestLimit ? '(guest limit reached)' : `(max ${MAX_ADDITIONAL_GUESTS + 1})`}
+            </p>
           </div>
 
           {/* Dietary Restrictions */}
           <div>
             <label htmlFor="dietaryNotes" className="block text-sm font-medium text-gray-700 mb-1">
-              Dietary Restrictions or Special Requests <span className="text-xs text-gray-500">(500 character limit)</span>
+              Dietary Restrictions or Special Requests <span className="text-xs text-gray-500">(optional, 500 character limit)</span>
             </label>
             <textarea
               id="dietaryNotes"
@@ -280,13 +355,16 @@ export default function SecureRSVPForm() {
                   ? 'border-red-500 focus:ring-red-200' 
                   : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
               }`}
-              placeholder="Vegetarian, gluten-free, allergies, etc."
+              placeholder="Leave blank if no restrictions. Include notes for you or added guests — vegetarian, gluten-free, allergies, etc."
             />
             {formErrors.dietaryNotes && (
               <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.dietaryNotes)}</p>
             )}
             <p className="text-gray-500 text-xs mt-1">
-              {formData.dietaryNotes.length}/500 characters
+              This note is for you; each added guest has their own dietary details above.
+            </p>
+            <p className="text-gray-500 text-xs mt-1">
+              {dietaryLength}/500 characters for your notes
             </p>
           </div>
         </>
