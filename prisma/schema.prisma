@@ -7,24 +7,37 @@ datasource db {
   url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL")
 }
+/** 
+  * RSVP models for tracking wedding guest responses.
+  * 
+  */
+model Invite {
+  id         String   @id @default(cuid())
+  inviteCode String   @unique
+  message    String?
 
-/**
- * RSVP model for tracking wedding guest responses.
- * Uses email as unique identifier to prevent duplicate entries.
- */
-model RSVP {
-  id              String   @id @default(cuid())
-  name            String
-  email           String   @unique
-  attending       Boolean
-  numberOfGuests  Int      @default(1)
-  dietaryNotes    String?
-  message         String?
-  respondedAt     DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  guests     Guest[]
 
-  @@map("rsvps")
-  @@index([email])
-  @@index([attending])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("invites")
+  @@index([inviteCode])
 }
 
+model Guest {
+  id        String     @id @default(cuid())
+  invite    Invite     @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  inviteId  String
+
+  name      String
+  status    Boolean
+  dietNotes String?
+
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("guests")
+  @@index([inviteId])
+  @@index([status])
+}

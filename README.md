@@ -6,7 +6,7 @@ A modern wedding RSVP management system built with Next.js, TypeScript, and Neon
 
 - Guest RSVP submission form
 - Real-time RSVP list with summary statistics
-- Duplicate prevention (updates existing RSVPs by email)
+- Duplicate prevention (updates existing RSVPs by invite code)
 - Dietary restrictions and special requests tracking
 - Responsive design for mobile and desktop
 
