@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import SecureRSVPForm from './components/SecureRSVPForm'
 
 export default function Home() {
@@ -17,7 +18,9 @@ export default function Home() {
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">
             Submit Your RSVP
           </h2>
-          <SecureRSVPForm />
+          <Suspense fallback={<p className="text-gray-600">Loading form...</p>}>
+            <SecureRSVPForm />
+          </Suspense>
         </div>
       </main>
     </div>
