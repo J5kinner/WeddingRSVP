@@ -16,9 +16,10 @@ function formatDate(dateValue: string | Date): string {
 
 interface RSVPListProps {
   rsvps: InviteResponse[]
+  onResetInvite?: (formData: FormData) => Promise<void>
 }
 
-export default function RSVPList({ rsvps }: RSVPListProps) {
+export default function RSVPList({ rsvps, onResetInvite }: RSVPListProps) {
   if (!rsvps || rsvps.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -97,6 +98,17 @@ export default function RSVPList({ rsvps }: RSVPListProps) {
                       <p className="text-sm text-gray-700 italic mt-1">
                         &quot;{sanitizeHTML(invite.message)}&quot;
                       </p>
+                    )}
+                    {onResetInvite && (
+                      <form action={onResetInvite} className="mt-2">
+                        <input type="hidden" name="inviteId" value={invite.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium text-blue-700 hover:text-blue-800 underline"
+                        >
+                          Reset invite to initial state
+                        </button>
+                      </form>
                     )}
                   </div>
                   <span className="text-xs text-gray-500 whitespace-nowrap" suppressHydrationWarning>
