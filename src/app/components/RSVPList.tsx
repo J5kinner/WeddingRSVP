@@ -7,19 +7,25 @@ import type { InviteResponse } from '@/types/rsvp'
  */
 function formatDate(dateValue: string | Date): string {
   const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue
-  return date.toLocaleDateString('en-US', {
+  if (Number.isNaN(date.getTime())) {
+    return 'Invalid date'
+  }
+
+  return new Intl.DateTimeFormat('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
-  })
+    timeZone: 'UTC'
+  }).format(date)
 }
 
 interface RSVPListProps {
   rsvps: InviteResponse[]
   onResetInvite?: (formData: FormData) => Promise<void>
+  onDeleteInvite?: (formData: FormData) => Promise<void>
 }
 
-export default function RSVPList({ rsvps, onResetInvite }: RSVPListProps) {
+export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPListProps) {
   if (!rsvps || rsvps.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -99,16 +105,31 @@ export default function RSVPList({ rsvps, onResetInvite }: RSVPListProps) {
                         &quot;{sanitizeHTML(invite.message)}&quot;
                       </p>
                     )}
-                    {onResetInvite && (
-                      <form action={onResetInvite} className="mt-2">
-                        <input type="hidden" name="inviteId" value={invite.id} />
-                        <button
-                          type="submit"
-                          className="text-xs font-medium text-blue-700 hover:text-blue-800 underline"
-                        >
-                          Reset invite to initial state
-                        </button>
-                      </form>
+                    {(onResetInvite || onDeleteInvite) && (
+                      <div className="flex items-center gap-3 mt-2">
+                        {onResetInvite && (
+                          <form action={onResetInvite}>
+                            <input type="hidden" name="inviteId" value={invite.id} />
+                            <button
+                              type="submit"
+                              className="text-xs font-medium text-blue-700 hover:text-blue-800 underline"
+                            >
+                              Reset
+                            </button>
+                          </form>
+                        )}
+                        {onDeleteInvite && (
+                          <form action={onDeleteInvite}>
+                            <input type="hidden" name="inviteId" value={invite.id} />
+                            <button
+                              type="submit"
+                              className="text-xs font-medium text-red-700 hover:text-red-800 underline"
+                            >
+                              Delete
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     )}
                   </div>
                   <span className="text-xs text-gray-500 whitespace-nowrap" suppressHydrationWarning>

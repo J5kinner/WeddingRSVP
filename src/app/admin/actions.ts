@@ -36,3 +36,24 @@ export async function resetInvite(formData: FormData) {
   await revalidatePath('/admin')
   await revalidatePath('/api/rsvp')
 }
+
+export async function deleteInvite(formData: FormData) {
+  const inviteId = formData.get('inviteId')
+
+  if (!inviteId || typeof inviteId !== 'string') {
+    throw new Error('Invalid invite ID')
+  }
+
+  await sql`
+    DELETE FROM guests
+    WHERE "inviteId" = ${inviteId}
+  `
+
+  await sql`
+    DELETE FROM invites
+    WHERE id = ${inviteId}
+  `
+
+  await revalidatePath('/admin')
+  await revalidatePath('/api/rsvp')
+}
