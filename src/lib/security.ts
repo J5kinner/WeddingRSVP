@@ -156,6 +156,7 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
   const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1;
 
   const rawAdditionalGuestCount = Array.isArray(data.additionalGuests) ? data.additionalGuests.length : 0
+  const rawAttending = data.attending
 
   const sanitizedAdditionalGuests: AdditionalGuest[] = Array.isArray(data.additionalGuests)
     ? data.additionalGuests
@@ -169,9 +170,11 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
         })
     : [];
 
+  const attendingSelected = typeof rawAttending === 'boolean'
+
   const sanitizedData = {
     name: sanitizeInput(typeof data.name === 'string' ? data.name : ''),
-    attending: Boolean(data.attending),
+    attending: attendingSelected ? Boolean(rawAttending) : false,
     dietaryNotes: sanitizeInput(typeof data.dietaryNotes === 'string' ? data.dietaryNotes : ''),
     message: sanitizeInput(typeof data.message === 'string' ? data.message : ''),
     additionalGuests: sanitizedAdditionalGuests,
@@ -194,6 +197,10 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
   }
 
   const guestErrors: string[] = [];
+
+  if (!attendingSelected) {
+    errors.attending = 'Please select if you will attend'
+  }
 
   sanitizedAdditionalGuests.forEach((guest, index) => {
     if (!guest.name) {

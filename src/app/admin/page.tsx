@@ -3,6 +3,7 @@ import { neon } from '@neondatabase/serverless'
 import AdminGuestForm from './AdminGuestForm'
 import AdminCsvImport from './AdminCsvImport'
 import type { InviteResponse } from '@/types/rsvp'
+import { resetInvite, deleteInvite } from './actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -129,7 +130,11 @@ export default async function AdminPage() {
             {error ? (
               <p className="text-center text-red-600">{error}</p>
             ) : (
-              <RSVPList rsvps={rsvps} />
+              <RSVPList
+                rsvps={rsvps}
+                onResetInvite={resetInvite}
+                onDeleteInvite={deleteInvite}
+              />
             )}
           </div>
         </div>

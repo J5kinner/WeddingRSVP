@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { csrfProtector } from '@/lib/csrf'
 import { sanitizeHTML, validateRSVPData } from '@/lib/security'
 
@@ -15,6 +16,7 @@ const defaultData: FormData = {
 }
 
 export default function AdminGuestForm() {
+  const router = useRouter()
   const [formData, setFormData] = useState<FormData>(defaultData)
   const [csrfToken, setCsrfToken] = useState<string>('')
   const [formErrors, setFormErrors] = useState<FormErrors>({})
@@ -80,6 +82,7 @@ export default function AdminGuestForm() {
         setSubmitMessage('Guest added successfully.')
         setFormData(defaultData)
         setFormErrors({})
+        router.refresh()
       } else {
         setSubmitStatus('error')
         setSubmitMessage(sanitizeHTML(data.error || 'Unable to add guest.'))

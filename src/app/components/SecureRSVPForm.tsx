@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { VALIDATION_CONFIG, validateRSVPData, sanitizeHTML } from '@/lib/security'
 import type { AdditionalGuest } from '@/lib/security'
+import type { InviteResponse } from '@/types/rsvp'
 import { csrfProtector } from '@/lib/csrf'
 
 const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1
@@ -12,25 +14,31 @@ type FormErrors = Partial<Record<FormField, string>>
 
 interface FormData {
   name: string;
-  attending: boolean;
+  attending: boolean | null;
   dietaryNotes: string;
   message: string;
   additionalGuests: AdditionalGuest[];
+  inviteCode?: string;
 }
 
 export default function SecureRSVPForm() {
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    attending: true,
+    attending: null,
     dietaryNotes: '',
     message: '',
     additionalGuests: [],
+    inviteCode: '',
   })
   const [csrfToken, setCsrfToken] = useState<string>('')
   const [formErrors, setFormErrors] = useState<FormErrors>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null)
   const [submitMessage, setSubmitMessage] = useState('')
+  const [isPrefilling, setIsPrefilling] = useState(false)
+  const [prefillError, setPrefillError] = useState('')
+  const [isLocked, setIsLocked] = useState(false)
 
   // Generate CSRF token on component mount
   useEffect(() => {
@@ -48,6 +56,66 @@ export default function SecureRSVPForm() {
     
     generateToken()
   }, [])
+
+  // Prefill form if an inviteCode is present in the URL
+  useEffect(() => {
+    const code = searchParams.get('inviteCode')
+    if (!code) return
+
+    const prefill = async () => {
+      setIsPrefilling(true)
+      setPrefillError('')
+
+      try {
+        const response = await fetch(`/api/rsvp?inviteCode=${encodeURIComponent(code)}`)
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}))
+          setPrefillError(
+            typeof data.error === 'string'
+              ? sanitizeHTML(data.error)
+              : 'Invite link not found. Please check your URL.'
+          )
+          return
+        }
+
+        const invite = (await response.json()) as InviteResponse
+        const primaryGuest = invite.guests[0]
+        const createdTime = new Date(invite.createdAt).getTime()
+        const updatedTime = new Date(invite.updatedAt).getTime()
+        const hasExistingResponse =
+          Number.isFinite(createdTime) &&
+          Number.isFinite(updatedTime) &&
+          updatedTime > createdTime
+        setIsLocked(hasExistingResponse)
+
+        setFormData({
+          name: primaryGuest?.name || '',
+          attending: hasExistingResponse ? (primaryGuest?.status ?? null) : null,
+          dietaryNotes: primaryGuest?.dietNotes || '',
+          message: invite.message || '',
+          additionalGuests: invite.guests.slice(1).map((guest) => ({
+            name: guest.name,
+            dietaryNotes: guest.dietNotes || ''
+          })),
+          inviteCode: invite.inviteCode
+        })
+        setSubmitStatus(null)
+        setSubmitMessage(
+          hasExistingResponse
+            ? 'We already have your RSVP on file. You can review it below or edit if something changed.'
+            : ''
+        )
+      } catch (error) {
+        console.error('Failed to prefill invite', error)
+        setPrefillError('Unable to load your invite. Please try again.')
+      } finally {
+        setIsPrefilling(false)
+      }
+    }
+
+    prefill()
+  }, [searchParams])
 
   // Debounced validation to avoid excessive validation calls
   const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
@@ -151,7 +219,8 @@ export default function SecureRSVPForm() {
         },
         body: JSON.stringify({
           ...validationResult.sanitizedData,
-          _csrf: csrfToken
+          _csrf: csrfToken,
+          inviteCode: formData.inviteCode
         }),
       })
 
@@ -159,15 +228,16 @@ export default function SecureRSVPForm() {
 
       if (response.ok) {
         setSubmitStatus('success')
-        setSubmitMessage('Thank you for your RSVP!')
+        setSubmitMessage('Thank you for your RSVP! We saved your response below. You can edit it anytime.')
         setFormData({
-          name: '',
-          attending: true,
-          dietaryNotes: '',
-          message: '',
-          additionalGuests: [],
+          name: validationResult.sanitizedData.name,
+          attending: validationResult.sanitizedData.attending,
+          dietaryNotes: validationResult.sanitizedData.dietaryNotes,
+          message: validationResult.sanitizedData.message,
+          additionalGuests: validationResult.sanitizedData.additionalGuests,
+          inviteCode: formData.inviteCode
         })
-        setTimeout(() => window.location.reload(), 1500)
+        setIsLocked(true)
       } else {
         setSubmitStatus('error')
         setSubmitMessage(sanitizeHTML(data.error || 'Something went wrong. Please try again.'))
@@ -189,9 +259,105 @@ export default function SecureRSVPForm() {
   const totalGuests = formData.attending ? formData.additionalGuests.length + 1 : 0
   const hasReachedGuestLimit = formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS
   const dietaryLength = formData.dietaryNotes.trim().length
+  const attendanceLabel =
+    formData.attending === true ? 'Attending' : formData.attending === false ? 'Not attending' : 'Not selected'
+
+  const handleUnlock = () => {
+    setIsLocked(false)
+    setSubmitStatus(null)
+    setSubmitMessage('You can update your RSVP below.')
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isPrefilling && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg p-3">
+          Loading your invite details...
+        </div>
+      )}
+
+      {prefillError && (
+        <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
+          {sanitizeHTML(prefillError)}
+        </div>
+      )}
+
+      {formData.inviteCode && !isPrefilling && !prefillError && (
+        <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg p-3">
+          Invite link detected. We prefilled details for {sanitizeHTML(formData.name || 'your invite')}.
+        </div>
+      )}
+
+      {submitMessage && (
+        <div
+          className={`p-4 rounded-lg ${
+            submitStatus === 'success'
+              ? 'bg-green-50 text-green-800 border border-green-200'
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}
+        >
+          {sanitizeHTML(submitMessage)}
+        </div>
+      )}
+
+      {isLocked ? (
+        <div className="space-y-4 bg-white border border-green-200 rounded-lg p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-lg font-semibold text-gray-900">RSVP on file</p>
+              <p className="text-sm text-gray-600">
+                Thank you, {sanitizeHTML(formData.name || 'guest')}. We&apos;ve saved your response.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleUnlock}
+              className="text-sm font-medium text-blue-700 hover:text-blue-800"
+            >
+              Edit my RSVP
+            </button>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2 text-sm text-gray-800">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Status</span>
+              <span className="px-2 py-1 rounded bg-gray-200 text-gray-800">{attendanceLabel}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Total guests</span>
+              <span className="text-gray-900">{totalGuests}</span>
+            </div>
+            {formData.additionalGuests.length > 0 && (
+              <div>
+                <p className="font-medium">Additional guests</p>
+                <ul className="mt-1 space-y-1">
+                  {formData.additionalGuests.map((guest, idx) => (
+                    <li key={`summary-guest-${idx}`} className="flex items-center justify-between">
+                      <span>{sanitizeHTML(guest.name || `Guest ${idx + 1}`)}</span>
+                      {guest.dietaryNotes && (
+                        <span className="text-xs text-gray-600">Diet: {sanitizeHTML(guest.dietaryNotes)}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {formData.dietaryNotes && (
+              <div>
+                <p className="font-medium">Dietary notes</p>
+                <p className="text-gray-700">{sanitizeHTML(formData.dietaryNotes)}</p>
+              </div>
+            )}
+            {formData.message && (
+              <div>
+                <p className="font-medium">Message</p>
+                <p className="text-gray-700">{sanitizeHTML(formData.message)}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Name Field */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
@@ -239,6 +405,7 @@ export default function SecureRSVPForm() {
                 name="attending"
                 checked={formData.attending === option.value}
                 onChange={() => handleAttendingChange(option.value)}
+                required={formData.attending === null}
                 className="mt-0.5 text-blue-600 focus:ring-blue-500"
               />
               <div className="flex-1">
@@ -287,7 +454,7 @@ export default function SecureRSVPForm() {
             )}
             <div className="space-y-3">
               {formData.additionalGuests.map((guest, index) => (
-                <div key={`${guest.name}-${index}`} className="border rounded-lg p-4 bg-white shadow-sm space-y-3">
+                <div key={`guest-${index}`} className="border rounded-lg p-4 bg-white shadow-sm space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-sm font-semibold text-gray-900">Guest {index + 1}</p>
@@ -396,23 +563,10 @@ export default function SecureRSVPForm() {
         </p>
       </div>
 
-      {/* Submit Status */}
-      {submitMessage && (
-        <div
-          className={`p-4 rounded-lg ${
-            submitStatus === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
-          }`}
-        >
-          {sanitizeHTML(submitMessage)}
-        </div>
-      )}
-
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || isPrefilling}
         className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
       >
         {isSubmitting ? (
@@ -434,6 +588,8 @@ export default function SecureRSVPForm() {
           🔒 Your information is secure. We use industry-standard security practices to protect your data.
         </p>
       </div>
+        </>
+      )}
     </form>
   )
 }
