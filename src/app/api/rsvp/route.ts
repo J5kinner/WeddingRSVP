@@ -120,16 +120,16 @@ async function fetchInviteWithGuestsByCode(inviteCode: string): Promise<InviteRe
 export async function GET(request: NextRequest) {
   const rateLimitDisabled = process.env.DISABLE_RSVP_RATE_LIMIT === 'true'
   const searchParams = request.nextUrl.searchParams
-  const inviteCode = searchParams.get('inviteCode')?.trim()
+  const inviteCode = (searchParams.get('inviteCode') || searchParams.get('invitecode'))?.trim()
   const clientId = getClientId(request)
   const rateLimitResult = rateLimitDisabled
     ? {
-        allowed: true,
-        remaining: RATE_LIMIT_CONFIGS.rsvpRead.maxRequests,
-        resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvpRead.windowMs
-      }
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIGS.rsvpRead.maxRequests,
+      resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvpRead.windowMs
+    }
     : checkRateLimit(clientId, RATE_LIMIT_CONFIGS.rsvpRead)
-  
+
   if (!rateLimitResult.allowed) {
     return new NextResponse(
       JSON.stringify({
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching RSVPs:', error)
     return NextResponse.json(
       { error: createSafeErrorMessage(error) },
-      { 
+      {
         status: 500,
         headers: getSecurityHeaders()
       }
@@ -225,12 +225,12 @@ export async function POST(request: NextRequest) {
   const clientId = getClientId(request)
   const rateLimitResult = rateLimitDisabled
     ? {
-        allowed: true,
-        remaining: RATE_LIMIT_CONFIGS.rsvp.maxRequests,
-        resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvp.windowMs
-      }
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIGS.rsvp.maxRequests,
+      resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvp.windowMs
+    }
     : checkRateLimit(clientId, RATE_LIMIT_CONFIGS.rsvp)
-  
+
   if (!rateLimitResult.allowed) {
     return new NextResponse(
       JSON.stringify({
@@ -276,7 +276,7 @@ export async function POST(request: NextRequest) {
     }
 
     const validationResult = validateRSVPData(body)
-    
+
     if (!validationResult.isValid) {
       return NextResponse.json(
         {
@@ -343,7 +343,7 @@ export async function POST(request: NextRequest) {
       if (!invite) {
         throw new Error('Invite could not be loaded after save')
       }
-      
+
       const headers = getSecurityHeaders()
       headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.rsvp.maxRequests))
       headers.set('X-RateLimit-Remaining', String(
@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
       headers.set('X-RateLimit-Reset', String(
         rateLimitDisabled ? 0 : Math.ceil(rateLimitResult.resetTime / 1000)
       ))
-      
+
       return NextResponse.json(invite, {
         status: 200,
         headers
@@ -378,7 +378,7 @@ export async function POST(request: NextRequest) {
     if (!invite) {
       throw new Error('Invite could not be loaded after save')
     }
-    
+
     const headers = getSecurityHeaders()
     headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.rsvp.maxRequests))
     headers.set('X-RateLimit-Remaining', String(
@@ -387,16 +387,16 @@ export async function POST(request: NextRequest) {
     headers.set('X-RateLimit-Reset', String(
       rateLimitDisabled ? 0 : Math.ceil(rateLimitResult.resetTime / 1000)
     ))
-    
+
     return NextResponse.json(invite, {
       status: 201,
       headers
     })
   } catch (error: unknown) {
     console.error('Error creating/updating RSVP:', error)
-    
+
     const errorMessage = createSafeErrorMessage(error)
-    
+
     return NextResponse.json(
       { error: errorMessage },
       {

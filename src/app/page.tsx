@@ -4,115 +4,103 @@ import SecureRSVPForm from './components/SecureRSVPForm'
 
 export default function Home() {
   return (
-    <div className="min-h-screen">
-      {/* Header Section - Botanical Wreath & Couple's Initials */}
-      <header className="section-spacing">
-        <div className="content-container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-6">
-            {/* Left: Couple's Names */}
-            <div className="flex flex-col items-center md:items-start text-center md:text-left order-2 md:order-1">
-              <p className="text-3xl sm:text-4xl md:text-5xl font-serif text-[color:var(--color-text-charcoal)]">
-                Jonah Skinner
-              </p>
-              <p className="text-sm sm:text-base uppercase tracking-wider text-[color:var(--color-text-charcoal)]/60 my-2">
-                and
-              </p>
-              <p className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
-                Olivia Savage
+    <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8 space-y-8 flex flex-col items-center">
+
+      {/* Invitation Card */}
+      <header className="w-full max-w-4xl bg-card text-card-foreground rounded-[2rem] shadow-sm border border-border/50 p-8 md:p-12 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
+
+          {/* Left: Names */}
+          <div className="flex flex-col items-center md:items-start text-center md:text-left order-2 md:order-1 flex-1">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-primary tracking-tight">
+              Jonah Skinner
+            </h1>
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground my-4 font-medium">
+              and
+            </p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-serif text-primary tracking-tight">
+              Olivia Savage
+            </h1>
+          </div>
+
+          {/* Center: Wreath & Date */}
+          <div className="flex flex-col items-center order-1 md:order-2">
+            <div className="relative flex items-center justify-center mb-6">
+              <Image
+                src="/wreath.png"
+                alt="Botanical wreath"
+                width={280}
+                height={240}
+                priority
+                className="w-48 sm:w-56 md:w-64 opacity-90"
+              />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="font-script text-5xl sm:text-6xl text-primary/80 pt-4">
+                  O & J
+                </span>
+              </div>
+            </div>
+            <p className="text-2xl sm:text-3xl font-serif text-foreground">
+              May 18, 2026
+            </p>
+          </div>
+
+          {/* Right: Details */}
+          <div className="flex flex-col items-center md:items-end text-center md:text-right space-y-6 order-3 md:order-3 flex-1">
+            <div className="space-y-2">
+              <h3 className="text-lg font-serif text-primary border-b border-primary/20 pb-1 inline-block">
+                Ceremony & Reception
+              </h3>
+              <p className="text-muted-foreground">
+                Saturday, May 18, 2026
               </p>
             </div>
 
-            {/* Center: Botanical Wreath / Crest with Date */}
-            <div className="flex flex-col items-center order-1 md:order-2 space-y-4">
-              <div className="relative flex items-center justify-center">
-                <Image
-                  src="/wreath.png"
-                  alt="Botanical wreath"
-                  width={280}
-                  height={240}
-                  priority
-                  className="h-auto w-48 sm:w-56 md:w-64"
-                />
-                {/* Couple's Initials Overlay - Script Font */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-script text-4xl sm:text-5xl md:text-6xl text-[color:var(--color-botanical-green)]">
-                    O & J
-                  </span>
-                </div>
-              </div>
-              {/* Wedding Date */}
-              <h1 className="text-xl sm:text-2xl md:text-3xl font-serif text-[color:var(--color-text-charcoal)] text-center">
-                May 18, 2026
-              </h1>
-            </div>
-
-            {/* Right: Ceremony, Reception & Venue Details */}
-            <div className="flex flex-col items-center md:items-end text-center md:text-right space-y-4 order-3">
-              {/* Ceremony & Reception */}
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-serif text-[color:var(--color-text-charcoal)]">
-                  Ceremony & Reception
-                </h3>
-                <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]/70">
-                  Saturday, May 18, 2026
-                </p>
-              </div>
-              
-              {/* Venue */}
-              <div className="space-y-1">
-                <h3 className="text-base sm:text-lg font-serif text-[color:var(--color-text-charcoal)]">
-                  Venue
-                </h3>
-                <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]/70">
-                  Bendooley Estate<br />
-                  Berrima, New South Wales
-                </p>
-              </div>
+            <div className="space-y-2">
+              <h3 className="text-lg font-serif text-primary border-b border-primary/20 pb-1 inline-block">
+                Venue
+              </h3>
+              <p className="text-muted-foreground">
+                Bendooley Estate<br />
+                Berrima, New South Wales
+              </p>
             </div>
           </div>
+        </div>
+
+        {/* Welcome Message */}
+        <div className="mt-12 text-center max-w-2xl mx-auto space-y-4 border-t border-border/50 pt-8">
+          <h2 className="text-3xl font-serif text-primary">
+            We&apos;re Getting Married
+          </h2>
+          <p className="text-lg text-muted-foreground leading-relaxed">
+            We would be honored to have you join us as we celebrate our special day.
+            Your presence would make our celebration complete.
+          </p>
         </div>
       </header>
 
-      {/* Hero / Welcome Section */}
-      <section className="section-spacing border-t border-[color:var(--color-border-subtle)]">
-        <div className="content-container">
-          <div className="text-center space-y-4 max-w-2xl mx-auto">
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
-              We&apos;re Getting Married
+      {/* RSVP Section */}
+      <main className="w-full max-w-2xl">
+        <div className="bg-surface-container-low rounded-[2rem] p-8 md:p-12 shadow-sm border border-border/50 animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+          <div className="text-center mb-8 space-y-2">
+            <h2 className="text-3xl font-serif text-primary">
+              RSVP
             </h2>
-            <p className="text-base sm:text-lg text-[color:var(--color-text-charcoal)]/80 leading-relaxed">
-              We would be honored to have you join us as we celebrate our special day.
-              Your presence would make our celebration complete.
+            <p className="text-muted-foreground">
+              Please let us know if you&apos;ll be joining us.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* RSVP Form Section */}
-      <section id="rsvp" className="section-spacing border-t border-[color:var(--color-border-subtle)]">
-        <div className="content-container">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center space-y-3">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
-                RSVP
-              </h2>
-              <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]/70">
-                Please let us know if you&apos;ll be joining us for our special day.
-              </p>
+          <Suspense fallback={
+            <div className="flex justify-center py-12 text-muted-foreground">
+              <div className="animate-pulse">Loading RSVP form...</div>
             </div>
-
-            <div className="mt-8">
-              <Suspense fallback={
-                <div className="text-center py-8 text-[color:var(--color-text-charcoal)]/60">
-                  Loading form...
-                </div>
-              }>
-                <SecureRSVPForm />
-              </Suspense>
-            </div>
-          </div>
+          }>
+            <SecureRSVPForm />
+          </Suspense>
         </div>
-      </section>
+      </main>
     </div>
   )
 }

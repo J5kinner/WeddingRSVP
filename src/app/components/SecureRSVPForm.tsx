@@ -41,12 +41,12 @@ export default function SecureRSVPForm() {
   const [prefillError, setPrefillError] = useState('')
   const [isLocked, setIsLocked] = useState(false)
 
-  // Ensure component is mounted before rendering to avoid hydration mismatches
+  // Ensure component is mounted before rendering
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Generate CSRF token on component mount
+  // Generate CSRF token
   useEffect(() => {
     const generateToken = async () => {
       try {
@@ -54,19 +54,18 @@ export default function SecureRSVPForm() {
         setCsrfToken(token)
       } catch (error) {
         console.error('Failed to generate CSRF token:', error)
-        // Generate a fallback token using a simpler method
         const fallbackToken = Math.random().toString(36).substring(2) + Date.now().toString(36)
         setCsrfToken(fallbackToken)
       }
     }
-    
+
     generateToken()
   }, [])
 
-  // Prefill form if an inviteCode is present in the URL
+  // Prefill form
   useEffect(() => {
     if (!mounted) return
-    const code = searchParams.get('inviteCode')
+    const code = searchParams.get('inviteCode') || searchParams.get('invitecode')
     if (!code) return
 
     const prefill = async () => {
@@ -124,31 +123,23 @@ export default function SecureRSVPForm() {
     prefill()
   }, [searchParams, mounted])
 
-  // Debounced validation to avoid excessive validation calls
   const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
     const validationData = { ...currentData, [fieldName]: value }
     const result = validateRSVPData(validationData)
-    
+
     const fieldError = result.errors[fieldName]
     setFormErrors(prev => ({
       ...prev,
       [fieldName]: fieldError || ''
     }))
-    
+
     return !fieldError
   }, [formData])
 
   const handleInputChange = (field: keyof FormData, value: unknown) => {
     setFormData(prev => ({ ...prev, [field]: value }))
-    
-    // Clear error when user starts typing
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }))
-    }
-    
-    if (value && (formErrors[field] || value.toString().length > 2)) {
-      validateField(field, value)
-    }
+    if (formErrors[field]) setFormErrors(prev => ({ ...prev, [field]: '' }))
+    if (value && (formErrors[field] || value.toString().length > 2)) validateField(field, value)
   }
 
   const handleAttendingChange = (value: boolean) => {
@@ -157,41 +148,26 @@ export default function SecureRSVPForm() {
       attending: value,
       additionalGuests: value ? formData.additionalGuests : []
     }
-
     setFormData(updatedData)
-    setFormErrors(prev => ({
-      ...prev,
-      attending: '',
-      additionalGuests: ''
-    }))
-
+    setFormErrors(prev => ({ ...prev, attending: '', additionalGuests: '' }))
     validateField('attending', value, updatedData)
   }
 
   const handleAddGuest = () => {
-    if (formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS) {
-      return
-    }
-
+    if (formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS) return
     setFormData(prev => ({
       ...prev,
       additionalGuests: [...prev.additionalGuests, { name: '', dietaryNotes: '' }]
     }))
-
     setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
   }
 
   const handleGuestChange = (index: number, field: keyof AdditionalGuest, value: string) => {
-    const updatedGuests = formData.additionalGuests.map((guest, guestIndex) => 
+    const updatedGuests = formData.additionalGuests.map((guest, guestIndex) =>
       guestIndex === index ? { ...guest, [field]: value } : guest
     )
-
     setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
-    
-    if (formErrors.additionalGuests) {
-      setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
-    }
-
+    if (formErrors.additionalGuests) setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
     if (value && (formErrors.additionalGuests || value.length > 1)) {
       validateField('additionalGuests', updatedGuests, { ...formData, additionalGuests: updatedGuests })
     }
@@ -205,9 +181,9 @@ export default function SecureRSVPForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     const validationResult = validateRSVPData(formData)
-    
+
     if (!validationResult.isValid) {
       setFormErrors(validationResult.errors)
       return
@@ -237,12 +213,8 @@ export default function SecureRSVPForm() {
         setSubmitStatus('success')
         setSubmitMessage('Thank you for your RSVP! We saved your response below. You can edit it anytime.')
         setFormData({
-          name: validationResult.sanitizedData.name,
-          attending: validationResult.sanitizedData.attending,
-          dietaryNotes: validationResult.sanitizedData.dietaryNotes,
-          message: validationResult.sanitizedData.message,
-          additionalGuests: validationResult.sanitizedData.additionalGuests,
-          inviteCode: formData.inviteCode
+          ...formData,
+          ...validationResult.sanitizedData
         })
         setIsLocked(true)
       } else {
@@ -258,348 +230,325 @@ export default function SecureRSVPForm() {
     }
   }
 
-  const attendingOptions = [
-    { value: true, label: 'Yes, I\'ll be there!', description: 'We can\'t wait to celebrate with you!' },
-    { value: false, label: 'Sorry, can\'t make it', description: 'We understand, but we\'ll miss you!' }
-  ]
-
-  const totalGuests = formData.attending ? formData.additionalGuests.length + 1 : 0
-  const hasReachedGuestLimit = formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS
-  const dietaryLength = formData.dietaryNotes.trim().length
-  const attendanceLabel =
-    formData.attending === true ? 'Attending' : formData.attending === false ? 'Not attending' : 'Not selected'
-
   const handleUnlock = () => {
     setIsLocked(false)
     setSubmitStatus(null)
     setSubmitMessage('You can update your RSVP below.')
   }
 
-  // Prevent hydration mismatch by ensuring consistent initial render
-  // The form structure is consistent, but searchParams-dependent logic only runs after mount
+  const attendingOptions = [
+    { value: true, label: 'Joyfully Accept', description: 'Can\'t wait to celebrate!' },
+    { value: false, label: 'Regretfully Decline', description: 'Will be there in spirit' }
+  ]
+
+  const totalGuests = formData.attending ? formData.additionalGuests.length + 1 : 0
+  const hasReachedGuestLimit = formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS
+  const dietaryLength = formData.dietaryNotes.trim().length
+  const attendanceLabel = formData.attending === true ? 'Attending' : formData.attending === false ? 'Not attending' : 'Not selected'
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="space-y-6">
       {isPrefilling && (
-        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
-          Loading your invite details...
+        <div className="bg-primary/10 border border-primary/20 text-primary text-sm rounded-xl p-4 animate-pulse">
+          Searching for your invitation...
         </div>
       )}
 
       {prefillError && (
-        <div className="bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)] text-sm rounded-[var(--radius-md)] p-3">
-          {sanitizeHTML(prefillError)}
+        <div className="bg-destructive/10 border border-destructive/20 text-foreground text-sm rounded-xl p-4 flex items-center gap-2">
+          <span className="text-destructive font-bold">Error:</span> {sanitizeHTML(prefillError)}
         </div>
       )}
 
       {formData.inviteCode && !isPrefilling && !prefillError && (
-        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
-          Invite link detected. We prefilled details for {sanitizeHTML(formData.name || 'your invite')}.
+        <div className="bg-secondary/10 border border-secondary/20 text-secondary-foreground text-sm rounded-xl p-4">
+          👋 Invite found! We prefilled details for <strong>{sanitizeHTML(formData.name || 'you')}</strong>.
         </div>
       )}
 
       {submitMessage && (
-        <div
-          className={`p-4 rounded-[var(--radius-md)] ${
-            submitStatus === 'success'
-              ? 'bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)]'
-              : 'bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)]'
-          }`}
-        >
+        <div className={`p-4 rounded-xl border flex items-center gap-3 animate-in fade-in slide-in-from-top-2 ${submitStatus === 'success'
+          ? 'bg-green-50 border-green-200 text-green-800'
+          : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+          <span className="text-xl">{submitStatus === 'success' ? '🎉' : '⚠️'}</span>
           {sanitizeHTML(submitMessage)}
         </div>
       )}
 
       {isLocked ? (
-        <div className="space-y-4 bg-white border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="bg-card text-card-foreground border border-border rounded-2xl p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <p className="text-lg font-serif text-[color:var(--color-text-charcoal)]">RSVP on file</p>
-              <p className="text-sm text-[color:var(--color-text-charcoal)]/70">
-                Thank you, {sanitizeHTML(formData.name || 'guest')}. We&apos;ve saved your response.
-              </p>
+              <h3 className="text-xl font-serif text-primary">RSVP Confirmed</h3>
+              <p className="text-muted-foreground text-sm">Thank you, {sanitizeHTML(formData.name)}. We have your response.</p>
             </div>
             <button
-              type="button"
               onClick={handleUnlock}
-              className="text-sm font-medium text-[color:var(--color-botanical-green)] hover:text-[color:var(--color-botanical-green)]/80 transition-colors"
+              className="text-sm font-medium text-primary hover:text-primary/80 underline decoration-2 underline-offset-4 transition-colors"
             >
-              Edit my RSVP
+              Edit Response
             </button>
           </div>
 
-          <div className="border border-[color:var(--color-border-subtle)] rounded-[var(--radius-sm)] p-3 bg-[color:var(--color-bg-paper)] space-y-2 text-sm text-[color:var(--color-text-charcoal)]/80">
-            <div className="flex items-center justify-between">
+          <div className="bg-muted/50 rounded-xl p-4 space-y-3 text-sm">
+            <div className="flex justify-between border-b border-border/50 pb-2">
               <span className="font-medium">Status</span>
-              <span className="px-2 py-1 rounded-[var(--radius-sm)] bg-[color:var(--color-sage)]/20 text-[color:var(--color-botanical-green)]">{attendanceLabel}</span>
+              <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${formData.attending ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                }`}>
+                {attendanceLabel}
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Total guests</span>
-              <span className="text-[color:var(--color-text-charcoal)]">{totalGuests}</span>
+            <div className="flex justify-between border-b border-border/50 pb-2">
+              <span className="font-medium">Total Guests</span>
+              <span>{totalGuests}</span>
             </div>
             {formData.additionalGuests.length > 0 && (
-              <div>
-                <p className="font-medium">Additional guests</p>
-                <ul className="mt-1 space-y-1">
-                  {formData.additionalGuests.map((guest, idx) => (
-                    <li key={`summary-guest-${idx}`} className="flex items-center justify-between">
-                      <span>{sanitizeHTML(guest.name || `Guest ${idx + 1}`)}</span>
-                      {guest.dietaryNotes && (
-                        <span className="text-xs text-[color:var(--color-text-charcoal)]/60">Diet: {sanitizeHTML(guest.dietaryNotes)}</span>
-                      )}
+              <div className="border-b border-border/50 pb-2">
+                <p className="font-medium mb-1">Guests</p>
+                <ul className="pl-4 list-disc list-outside text-muted-foreground space-y-1">
+                  {formData.additionalGuests.map((g, i) => (
+                    <li key={i}>
+                      {g.name}
+                      {g.dietaryNotes && <span className="text-xs opacity-70"> ({g.dietaryNotes})</span>}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-            {formData.dietaryNotes && (
-              <div>
-                <p className="font-medium">Dietary notes</p>
-                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.dietaryNotes)}</p>
-              </div>
-            )}
             {formData.message && (
               <div>
-                <p className="font-medium">Message</p>
-                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.message)}</p>
+                <p className="font-medium mb-1">Message</p>
+                <p className="text-muted-foreground italic">&ldquo;{sanitizeHTML(formData.message)}&rdquo;</p>
               </div>
             )}
           </div>
         </div>
       ) : (
-        <>
-      {/* Name Field */}
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-          Name * <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(100 character limit)</span>
-        </label>
-        <input
-          type="text"
-          id="name"
-          required
-          value={formData.name}
-          onChange={(e) => handleInputChange('name', e.target.value)}
-          maxLength={100}
-          className={`input-botanical ${
-            formErrors.name 
-              ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
-              : ''
-          }`}
-          placeholder="John & Jane Doe"
-        />
-        {formErrors.name && (
-          <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.name)}</p>
-        )}
-        <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-          {formData.name.length}/100 characters
-        </p>
-      </div>
-
-      {/* Attending Field */}
-      <div>
-        <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-3">
-          Will you be attending? *
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {attendingOptions.map((option) => (
-            <label
-              key={String(option.value)}
-              className={`flex items-start space-x-3 p-4 border rounded-[var(--radius-md)] cursor-pointer transition-all ${
-                formData.attending === option.value
-                  ? 'border-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10'
-                  : 'border-[color:var(--color-border-light)] hover:bg-[color:var(--color-bg-paper)]'
-              }`}
-            >
-              <input
-                type="radio"
-                name="attending"
-                checked={formData.attending === option.value}
-                onChange={() => handleAttendingChange(option.value)}
-                required={formData.attending === null}
-                className="mt-0.5 text-[color:var(--color-botanical-green)] focus:ring-[color:var(--color-botanical-green)]"
-              />
-              <div className="flex-1">
-                <span className="font-medium text-[color:var(--color-text-charcoal)]">{option.label}</span>
-                <p className="text-sm text-[color:var(--color-text-charcoal)]/70 mt-1">{option.description}</p>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {/* Name Field */}
+          <div className="group">
+            <label htmlFor="name" className="block text-sm font-medium text-primary mb-2">
+              Your Name *
             </label>
-          ))}
-        </div>
-        {formErrors.attending && (
-          <p className="text-[color:var(--color-rose)] text-sm mt-2">{sanitizeHTML(formErrors.attending)}</p>
-        )}
-      </div>
-
-      {/* Conditional Fields for Attending Guests */}
-      {formData.attending && (
-        <>
-          {/* Additional Guests */}
-          <div className="space-y-3">
-            <div className="flex items-start justify-between flex-wrap gap-2">
-              <div>
-                <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)]">
-                  Add guests
-                </label>
-                <p className="text-xs text-[color:var(--color-text-charcoal)]/60 mt-1">
-                  Share names and dietary needs for anyone attending with you.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleAddGuest}
-                disabled={hasReachedGuestLimit}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-sm)] hover:bg-[color:var(--color-sage)]/20 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-              >
-                <span className="text-lg mr-2">+</span>
-                Add guest
-              </button>
+            <div className="relative">
+              <input
+                type="text"
+                id="name"
+                required
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                maxLength={100}
+                className={`w-full px-4 py-3 bg-surface border rounded-xl outline-none transition-all duration-200 ${formErrors.name
+                  ? 'border-destructive focus:ring-2 focus:ring-destructive/20'
+                  : 'border-outline hover:border-primary focus:border-primary focus:ring-4 focus:ring-primary/10'
+                  }`}
+                placeholder="Name(s) as on invitation"
+              />
             </div>
-            {formErrors.additionalGuests && (
-              <p className="text-[color:var(--color-rose)] text-sm">{sanitizeHTML(formErrors.additionalGuests)}</p>
-            )}
-            {formData.additionalGuests.length === 0 && (
-              <div className="border border-dashed border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 text-sm text-[color:var(--color-text-charcoal)]/60 bg-[color:var(--color-bg-paper)]">
-                No additional guests yet. Click &quot;Add guest&quot; to include family or friends.
-              </div>
-            )}
-            <div className="space-y-3">
-              {formData.additionalGuests.map((guest, index) => (
-                <div key={`guest-${index}`} className="border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 bg-white space-y-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-[color:var(--color-text-charcoal)]">Guest {index + 1}</p>
-                      <p className="text-xs text-[color:var(--color-text-charcoal)]/60">Provide their name and dietary needs.</p>
+            <div className="flex justify-between mt-1 px-1">
+              <p className="text-destructive text-xs min-h-[1rem]">
+                {formErrors.name && sanitizeHTML(formErrors.name)}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {formData.name.length}/100
+              </p>
+            </div>
+          </div>
+
+          {/* Attending Field */}
+          <div>
+            <label className="block text-sm font-medium text-primary mb-3">
+              Response *
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {attendingOptions.map((option) => (
+                <label
+                  key={String(option.value)}
+                  className={`relative flex flex-col p-4 border rounded-2xl cursor-pointer transition-all duration-200 hover:shadow-md ${formData.attending === option.value
+                    ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                    : 'border-outline hover:border-primary/50 hover:bg-surface-container'
+                    }`}
+                >
+                  <div className="flex items-center space-x-3 mb-1">
+                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${formData.attending === option.value ? 'border-primary' : 'border-outline'
+                      }`}>
+                      {formData.attending === option.value && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                      )}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveGuest(index)}
-                      className="text-sm text-[color:var(--color-rose)] hover:text-[color:var(--color-rose)]/80 transition-colors"
-                    >
-                      Remove
-                    </button>
+                    <input
+                      type="radio"
+                      name="attending"
+                      checked={formData.attending === option.value}
+                      onChange={() => handleAttendingChange(option.value)}
+                      className="sr-only"
+                    />
+                    <span className={`font-semibold ${formData.attending === option.value ? 'text-primary' : 'text-foreground'
+                      }`}>
+                      {option.label}
+                    </span>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-                        Guest name *
-                      </label>
-                      <input
-                        type="text"
-                        value={guest.name}
-                        onChange={(e) => handleGuestChange(index, 'name', e.target.value)}
-                        maxLength={100}
-                        className="input-botanical"
-                        placeholder="Guest name"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-                        Dietary needs or notes
-                      </label>
-                      <input
-                        type="text"
-                        value={guest.dietaryNotes}
-                        onChange={(e) => handleGuestChange(index, 'dietaryNotes', e.target.value)}
-                        maxLength={120}
-                        className="input-botanical"
-                        placeholder="Vegetarian, gluten-free, allergies, etc."
-                      />
-                    </div>
-                  </div>
-                </div>
+                  <p className="text-sm text-muted-foreground pl-8">
+                    {option.description}
+                  </p>
+                </label>
               ))}
             </div>
-            <p className="text-xs text-[color:var(--color-text-charcoal)]/70">
-              Total guests (including you): <span className="font-semibold text-[color:var(--color-text-charcoal)]">{totalGuests}</span>{' '}
-              {hasReachedGuestLimit ? '(guest limit reached)' : `(max ${MAX_ADDITIONAL_GUESTS + 1})`}
-            </p>
+            {formErrors.attending && (
+              <p className="text-destructive text-sm mt-2">{sanitizeHTML(formErrors.attending)}</p>
+            )}
           </div>
 
-          {/* Dietary Restrictions */}
+          {/* Conditional Fields for Attending Guests */}
+          {formData.attending && (
+            <div className="animate-in slide-in-from-top-4 fade-in duration-300 space-y-8">
+              {/* Additional Guests */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-primary">Guest List</h3>
+                  <button
+                    type="button"
+                    onClick={handleAddGuest}
+                    disabled={hasReachedGuestLimit}
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-primary bg-primary/10 rounded-full hover:bg-primary/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <span className="text-lg mr-2 leading-none">+</span>
+                    Add Guest
+                  </button>
+                </div>
+
+                {formData.additionalGuests.length === 0 ? (
+                  <div className="border border-dashed border-outline-variant rounded-2xl p-6 text-center text-muted-foreground bg-surface-container-low/50">
+                    <p>Attending solo? Just you!</p>
+                    <p className="text-sm mt-1">Click &quot;Add Guest&quot; if you have a plus one.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {formData.additionalGuests.map((guest, index) => (
+                      <div key={`${guest.name}-${index}`} className="relative group border border-outline rounded-2xl p-5 bg-surface hover:border-primary/50 transition-colors">
+                        <div className="flex justify-between items-start mb-4">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Guest {index + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGuest(index)}
+                            className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                            aria-label="Remove guest"
+                          >
+                            <span className="text-sm font-medium">Remove</span>
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <input
+                              type="text"
+                              value={guest.name}
+                              onChange={(e) => handleGuestChange(index, 'name', e.target.value)}
+                              maxLength={100}
+                              className="w-full px-4 py-2 bg-surface-container-low border border-outline rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/70"
+                              placeholder="Guest Name"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <input
+                              type="text"
+                              value={guest.dietaryNotes}
+                              onChange={(e) => handleGuestChange(index, 'dietaryNotes', e.target.value)}
+                              maxLength={120}
+                              className="w-full px-4 py-2 bg-surface-container-low border border-outline rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all placeholder:text-muted-foreground/70"
+                              placeholder="Dietary Requirements"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground text-right px-1">
+                  Total Party Size: <span className="font-semibold text-primary">{totalGuests}</span>
+                  {hasReachedGuestLimit && <span className="ml-1">(Max limit reached)</span>}
+                </p>
+              </div>
+
+              {/* Dietary Restrictions */}
+              <div>
+                <label htmlFor="dietaryNotes" className="block text-sm font-medium text-primary mb-2">
+                  Dietary Requirements <span className="text-muted-foreground font-normal">(Optional)</span>
+                </label>
+                <textarea
+                  id="dietaryNotes"
+                  value={formData.dietaryNotes}
+                  onChange={(e) => handleInputChange('dietaryNotes', e.target.value)}
+                  maxLength={500}
+                  rows={3}
+                  className={`w-full px-4 py-3 bg-surface border rounded-xl outline-none transition-all duration-200 ${formErrors.dietaryNotes
+                    ? 'border-destructive focus:ring-2 focus:ring-destructive/20'
+                    : 'border-outline hover:border-primary focus:border-primary focus:ring-4 focus:ring-primary/10'
+                    }`}
+                  placeholder="Any allergies or dietary restrictions for yourself?"
+                />
+                <div className="flex justify-end mt-1 px-1">
+                  <p className="text-muted-foreground text-xs">
+                    {dietaryLength}/500
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Message Field */}
           <div>
-            <label htmlFor="dietaryNotes" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-              Dietary Restrictions or Special Requests <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(optional, 500 character limit)</span>
+            <label htmlFor="message" className="block text-sm font-medium text-primary mb-2">
+              Leave a Note <span className="text-muted-foreground font-normal">(Optional)</span>
             </label>
             <textarea
-              id="dietaryNotes"
-              value={formData.dietaryNotes}
-              onChange={(e) => handleInputChange('dietaryNotes', e.target.value)}
-              maxLength={500}
+              id="message"
+              value={formData.message}
+              onChange={(e) => handleInputChange('message', e.target.value)}
+              maxLength={300}
               rows={3}
-              className={`textarea-botanical ${
-                formErrors.dietaryNotes 
-                  ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
-                  : ''
-              }`}
-              placeholder="Leave blank if no restrictions. Include notes for you or added guests — vegetarian, gluten-free, allergies, etc."
+              className="w-full px-4 py-3 bg-surface border border-outline rounded-xl outline-none transition-all duration-200 hover:border-primary focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-muted-foreground/70"
+              placeholder="Share a message with the couple..."
             />
-            {formErrors.dietaryNotes && (
-              <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.dietaryNotes)}</p>
-            )}
-            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-              This note is for you; each added guest has their own dietary details above.
-            </p>
-            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-              {dietaryLength}/500 characters for your notes
-            </p>
+            <div className="flex justify-between mt-1 px-1">
+              <p className="text-destructive text-xs min-h-[1rem]">
+                {formErrors.message && sanitizeHTML(formErrors.message)}
+              </p>
+              <p className="text-muted-foreground text-xs">
+                {formData.message.length}/300
+              </p>
+            </div>
           </div>
-        </>
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting || isPrefilling}
+            className="w-full bg-primary text-primary-foreground py-4 px-6 rounded-full font-semibold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+          >
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Processing...
+              </span>
+            ) : (
+              formData.attending ? 'Confirm RSVP' : 'Send Response'
+            )}
+          </button>
+
+          <p className="text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5 opacity-80">
+            <span className="text-lg">🔒</span> Securely submitted
+          </p>
+        </form>
       )}
-
-      {/* Message Field */}
-      <div>
-        <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-          Message <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(300 character limit, optional)</span>
-        </label>
-        <textarea
-          id="message"
-          value={formData.message}
-          onChange={(e) => handleInputChange('message', e.target.value)}
-          maxLength={300}
-          rows={3}
-          className={`textarea-botanical ${
-            formErrors.message 
-              ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
-              : ''
-          }`}
-          placeholder="We're so excited to celebrate with you!"
-        />
-        {formErrors.message && (
-          <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.message)}</p>
-        )}
-        <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-          {formData.message.length}/300 characters
-        </p>
-      </div>
-
-      {/* Submit Button */}
-      <button
-        type="submit"
-        disabled={isSubmitting || isPrefilling}
-        className="btn-botanical w-full disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isSubmitting ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Submitting...
-          </span>
-        ) : (
-          'Submit RSVP'
-        )}
-      </button>
-
-      {/* Security Notice */}
-      <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-md)] p-4">
-        <p className="text-sm text-[color:var(--color-botanical-green)]">
-          🔒 Your information is secure. We use industry-standard security practices to protect your data.
-        </p>
-      </div>
-        </>
-      )}
-    </form>
+    </div>
   )
 }
