@@ -23,6 +23,7 @@ interface FormData {
 
 export default function SecureRSVPForm() {
   const searchParams = useSearchParams()
+  const [mounted, setMounted] = useState(false)
   const [formData, setFormData] = useState<FormData>({
     name: '',
     attending: null,
@@ -39,6 +40,11 @@ export default function SecureRSVPForm() {
   const [isPrefilling, setIsPrefilling] = useState(false)
   const [prefillError, setPrefillError] = useState('')
   const [isLocked, setIsLocked] = useState(false)
+
+  // Ensure component is mounted before rendering to avoid hydration mismatches
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   // Generate CSRF token on component mount
   useEffect(() => {
@@ -59,6 +65,7 @@ export default function SecureRSVPForm() {
 
   // Prefill form if an inviteCode is present in the URL
   useEffect(() => {
+    if (!mounted) return
     const code = searchParams.get('inviteCode')
     if (!code) return
 
@@ -115,7 +122,7 @@ export default function SecureRSVPForm() {
     }
 
     prefill()
-  }, [searchParams])
+  }, [searchParams, mounted])
 
   // Debounced validation to avoid excessive validation calls
   const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
@@ -268,32 +275,35 @@ export default function SecureRSVPForm() {
     setSubmitMessage('You can update your RSVP below.')
   }
 
+  // Prevent hydration mismatch by ensuring consistent initial render
+  // The form structure is consistent, but searchParams-dependent logic only runs after mount
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {isPrefilling && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 text-sm rounded-lg p-3">
+        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
           Loading your invite details...
         </div>
       )}
 
       {prefillError && (
-        <div className="bg-red-50 border border-red-200 text-red-800 text-sm rounded-lg p-3">
+        <div className="bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)] text-sm rounded-[var(--radius-md)] p-3">
           {sanitizeHTML(prefillError)}
         </div>
       )}
 
       {formData.inviteCode && !isPrefilling && !prefillError && (
-        <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg p-3">
+        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
           Invite link detected. We prefilled details for {sanitizeHTML(formData.name || 'your invite')}.
         </div>
       )}
 
       {submitMessage && (
         <div
-          className={`p-4 rounded-lg ${
+          className={`p-4 rounded-[var(--radius-md)] ${
             submitStatus === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)]'
+              : 'bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)]'
           }`}
         >
           {sanitizeHTML(submitMessage)}
@@ -301,31 +311,31 @@ export default function SecureRSVPForm() {
       )}
 
       {isLocked ? (
-        <div className="space-y-4 bg-white border border-green-200 rounded-lg p-4 shadow-sm">
-          <div className="flex items-center justify-between">
+        <div className="space-y-4 bg-white border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
             <div>
-              <p className="text-lg font-semibold text-gray-900">RSVP on file</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-lg font-serif text-[color:var(--color-text-charcoal)]">RSVP on file</p>
+              <p className="text-sm text-[color:var(--color-text-charcoal)]/70">
                 Thank you, {sanitizeHTML(formData.name || 'guest')}. We&apos;ve saved your response.
               </p>
             </div>
             <button
               type="button"
               onClick={handleUnlock}
-              className="text-sm font-medium text-blue-700 hover:text-blue-800"
+              className="text-sm font-medium text-[color:var(--color-botanical-green)] hover:text-[color:var(--color-botanical-green)]/80 transition-colors"
             >
               Edit my RSVP
             </button>
           </div>
 
-          <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2 text-sm text-gray-800">
+          <div className="border border-[color:var(--color-border-subtle)] rounded-[var(--radius-sm)] p-3 bg-[color:var(--color-bg-paper)] space-y-2 text-sm text-[color:var(--color-text-charcoal)]/80">
             <div className="flex items-center justify-between">
               <span className="font-medium">Status</span>
-              <span className="px-2 py-1 rounded bg-gray-200 text-gray-800">{attendanceLabel}</span>
+              <span className="px-2 py-1 rounded-[var(--radius-sm)] bg-[color:var(--color-sage)]/20 text-[color:var(--color-botanical-green)]">{attendanceLabel}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="font-medium">Total guests</span>
-              <span className="text-gray-900">{totalGuests}</span>
+              <span className="text-[color:var(--color-text-charcoal)]">{totalGuests}</span>
             </div>
             {formData.additionalGuests.length > 0 && (
               <div>
@@ -335,7 +345,7 @@ export default function SecureRSVPForm() {
                     <li key={`summary-guest-${idx}`} className="flex items-center justify-between">
                       <span>{sanitizeHTML(guest.name || `Guest ${idx + 1}`)}</span>
                       {guest.dietaryNotes && (
-                        <span className="text-xs text-gray-600">Diet: {sanitizeHTML(guest.dietaryNotes)}</span>
+                        <span className="text-xs text-[color:var(--color-text-charcoal)]/60">Diet: {sanitizeHTML(guest.dietaryNotes)}</span>
                       )}
                     </li>
                   ))}
@@ -345,13 +355,13 @@ export default function SecureRSVPForm() {
             {formData.dietaryNotes && (
               <div>
                 <p className="font-medium">Dietary notes</p>
-                <p className="text-gray-700">{sanitizeHTML(formData.dietaryNotes)}</p>
+                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.dietaryNotes)}</p>
               </div>
             )}
             {formData.message && (
               <div>
                 <p className="font-medium">Message</p>
-                <p className="text-gray-700">{sanitizeHTML(formData.message)}</p>
+                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.message)}</p>
               </div>
             )}
           </div>
@@ -360,8 +370,8 @@ export default function SecureRSVPForm() {
         <>
       {/* Name Field */}
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-          Name * <span className="text-xs text-gray-500">(100 character limit)</span>
+        <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
+          Name * <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(100 character limit)</span>
         </label>
         <input
           type="text"
@@ -370,34 +380,34 @@ export default function SecureRSVPForm() {
           value={formData.name}
           onChange={(e) => handleInputChange('name', e.target.value)}
           maxLength={100}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
+          className={`input-botanical ${
             formErrors.name 
-              ? 'border-red-500 focus:ring-red-200' 
-              : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+              ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
+              : ''
           }`}
           placeholder="John & Jane Doe"
         />
         {formErrors.name && (
-          <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.name)}</p>
+          <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.name)}</p>
         )}
-        <p className="text-gray-500 text-xs mt-1">
+        <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
           {formData.name.length}/100 characters
         </p>
       </div>
 
       {/* Attending Field */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-3">
+        <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-3">
           Will you be attending? *
         </label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {attendingOptions.map((option) => (
             <label
               key={String(option.value)}
-              className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
+              className={`flex items-start space-x-3 p-4 border rounded-[var(--radius-md)] cursor-pointer transition-all ${
                 formData.attending === option.value
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:bg-gray-50'
+                  ? 'border-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10'
+                  : 'border-[color:var(--color-border-light)] hover:bg-[color:var(--color-bg-paper)]'
               }`}
             >
               <input
@@ -406,17 +416,17 @@ export default function SecureRSVPForm() {
                 checked={formData.attending === option.value}
                 onChange={() => handleAttendingChange(option.value)}
                 required={formData.attending === null}
-                className="mt-0.5 text-blue-600 focus:ring-blue-500"
+                className="mt-0.5 text-[color:var(--color-botanical-green)] focus:ring-[color:var(--color-botanical-green)]"
               />
               <div className="flex-1">
-                <span className="font-medium text-gray-900">{option.label}</span>
-                <p className="text-sm text-gray-600 mt-1">{option.description}</p>
+                <span className="font-medium text-[color:var(--color-text-charcoal)]">{option.label}</span>
+                <p className="text-sm text-[color:var(--color-text-charcoal)]/70 mt-1">{option.description}</p>
               </div>
             </label>
           ))}
         </div>
         {formErrors.attending && (
-          <p className="text-red-600 text-sm mt-2">{sanitizeHTML(formErrors.attending)}</p>
+          <p className="text-[color:var(--color-rose)] text-sm mt-2">{sanitizeHTML(formErrors.attending)}</p>
         )}
       </div>
 
@@ -425,12 +435,12 @@ export default function SecureRSVPForm() {
         <>
           {/* Additional Guests */}
           <div className="space-y-3">
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between flex-wrap gap-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)]">
                   Add guests
                 </label>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-[color:var(--color-text-charcoal)]/60 mt-1">
                   Share names and dietary needs for anyone attending with you.
                 </p>
               </div>
@@ -438,39 +448,39 @@ export default function SecureRSVPForm() {
                 type="button"
                 onClick={handleAddGuest}
                 disabled={hasReachedGuestLimit}
-                className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-sm)] hover:bg-[color:var(--color-sage)]/20 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 <span className="text-lg mr-2">+</span>
                 Add guest
               </button>
             </div>
             {formErrors.additionalGuests && (
-              <p className="text-red-600 text-sm">{sanitizeHTML(formErrors.additionalGuests)}</p>
+              <p className="text-[color:var(--color-rose)] text-sm">{sanitizeHTML(formErrors.additionalGuests)}</p>
             )}
             {formData.additionalGuests.length === 0 && (
-              <div className="border border-dashed border-gray-300 rounded-lg p-4 text-sm text-gray-600 bg-gray-50">
+              <div className="border border-dashed border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 text-sm text-[color:var(--color-text-charcoal)]/60 bg-[color:var(--color-bg-paper)]">
                 No additional guests yet. Click &quot;Add guest&quot; to include family or friends.
               </div>
             )}
             <div className="space-y-3">
               {formData.additionalGuests.map((guest, index) => (
-                <div key={`guest-${index}`} className="border rounded-lg p-4 bg-white shadow-sm space-y-3">
+                <div key={`guest-${index}`} className="border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 bg-white space-y-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">Guest {index + 1}</p>
-                      <p className="text-xs text-gray-500">Provide their name and dietary needs.</p>
+                      <p className="text-sm font-semibold text-[color:var(--color-text-charcoal)]">Guest {index + 1}</p>
+                      <p className="text-xs text-[color:var(--color-text-charcoal)]/60">Provide their name and dietary needs.</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveGuest(index)}
-                      className="text-sm text-red-600 hover:text-red-700"
+                      className="text-sm text-[color:var(--color-rose)] hover:text-[color:var(--color-rose)]/80 transition-colors"
                     >
                       Remove
                     </button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
                         Guest name *
                       </label>
                       <input
@@ -478,13 +488,13 @@ export default function SecureRSVPForm() {
                         value={guest.name}
                         onChange={(e) => handleGuestChange(index, 'name', e.target.value)}
                         maxLength={100}
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                        className="input-botanical"
                         placeholder="Guest name"
                         required
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
                         Dietary needs or notes
                       </label>
                       <input
@@ -492,7 +502,7 @@ export default function SecureRSVPForm() {
                         value={guest.dietaryNotes}
                         onChange={(e) => handleGuestChange(index, 'dietaryNotes', e.target.value)}
                         maxLength={120}
-                        className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none border-gray-300 focus:ring-blue-500 focus:border-transparent"
+                        className="input-botanical"
                         placeholder="Vegetarian, gluten-free, allergies, etc."
                       />
                     </div>
@@ -500,16 +510,16 @@ export default function SecureRSVPForm() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-gray-600">
-              Total guests (including you): <span className="font-semibold text-gray-900">{totalGuests}</span>{' '}
+            <p className="text-xs text-[color:var(--color-text-charcoal)]/70">
+              Total guests (including you): <span className="font-semibold text-[color:var(--color-text-charcoal)]">{totalGuests}</span>{' '}
               {hasReachedGuestLimit ? '(guest limit reached)' : `(max ${MAX_ADDITIONAL_GUESTS + 1})`}
             </p>
           </div>
 
           {/* Dietary Restrictions */}
           <div>
-            <label htmlFor="dietaryNotes" className="block text-sm font-medium text-gray-700 mb-1">
-              Dietary Restrictions or Special Requests <span className="text-xs text-gray-500">(optional, 500 character limit)</span>
+            <label htmlFor="dietaryNotes" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
+              Dietary Restrictions or Special Requests <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(optional, 500 character limit)</span>
             </label>
             <textarea
               id="dietaryNotes"
@@ -517,20 +527,20 @@ export default function SecureRSVPForm() {
               onChange={(e) => handleInputChange('dietaryNotes', e.target.value)}
               maxLength={500}
               rows={3}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
+              className={`textarea-botanical ${
                 formErrors.dietaryNotes 
-                  ? 'border-red-500 focus:ring-red-200' 
-                  : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+                  ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
+                  : ''
               }`}
               placeholder="Leave blank if no restrictions. Include notes for you or added guests — vegetarian, gluten-free, allergies, etc."
             />
             {formErrors.dietaryNotes && (
-              <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.dietaryNotes)}</p>
+              <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.dietaryNotes)}</p>
             )}
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
               This note is for you; each added guest has their own dietary details above.
             </p>
-            <p className="text-gray-500 text-xs mt-1">
+            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
               {dietaryLength}/500 characters for your notes
             </p>
           </div>
@@ -539,8 +549,8 @@ export default function SecureRSVPForm() {
 
       {/* Message Field */}
       <div>
-        <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
-          Message <span className="text-xs text-gray-500">(300 character limit, optional)</span>
+        <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
+          Message <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(300 character limit, optional)</span>
         </label>
         <textarea
           id="message"
@@ -548,17 +558,17 @@ export default function SecureRSVPForm() {
           onChange={(e) => handleInputChange('message', e.target.value)}
           maxLength={300}
           rows={3}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
+          className={`textarea-botanical ${
             formErrors.message 
-              ? 'border-red-500 focus:ring-red-200' 
-              : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+              ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]' 
+              : ''
           }`}
           placeholder="We're so excited to celebrate with you!"
         />
         {formErrors.message && (
-          <p className="text-red-600 text-sm mt-1">{sanitizeHTML(formErrors.message)}</p>
+          <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.message)}</p>
         )}
-        <p className="text-gray-500 text-xs mt-1">
+        <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
           {formData.message.length}/300 characters
         </p>
       </div>
@@ -567,7 +577,7 @@ export default function SecureRSVPForm() {
       <button
         type="submit"
         disabled={isSubmitting || isPrefilling}
-        className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:hover:bg-gray-400"
+        className="btn-botanical w-full disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? (
           <span className="flex items-center justify-center">
@@ -578,13 +588,13 @@ export default function SecureRSVPForm() {
             Submitting...
           </span>
         ) : (
-          'Submit Secure RSVP'
+          'Submit RSVP'
         )}
       </button>
 
       {/* Security Notice */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
+      <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-md)] p-4">
+        <p className="text-sm text-[color:var(--color-botanical-green)]">
           🔒 Your information is secure. We use industry-standard security practices to protect your data.
         </p>
       </div>

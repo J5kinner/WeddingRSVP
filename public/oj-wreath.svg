@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 320" fill="none">
+  <g stroke="#3d6a4d" stroke-width="2" stroke-linecap="round">
+    <path d="M180 238c-60-16-112-98-72-154" />
+    <path d="M180 238c-50-10-86-78-57-122" />
+    <g transform="scale(-1 1) translate(-360 0)">
+      <path d="M180 238c-60-16-112-98-72-154" />
+      <path d="M180 238c-50-10-86-78-57-122" />
+    </g>
+  </g>
+  <g fill="#5f8d6b" opacity="0.92">
+    <ellipse cx="110" cy="162" rx="13" ry="24" transform="rotate(-16 110 162)" />
+    <ellipse cx="118" cy="136" rx="12" ry="22" transform="rotate(-26 118 136)" />
+    <ellipse cx="125" cy="190" rx="12" ry="22" transform="rotate(10 125 190)" />
+    <ellipse cx="140" cy="152" rx="11" ry="20" transform="rotate(-8 140 152)" />
+    <ellipse cx="148" cy="182" rx="11" ry="18" transform="rotate(14 148 182)" />
+    <ellipse cx="104" cy="118" rx="10" ry="18" transform="rotate(-20 104 118)" />
+    <ellipse cx="96" cy="94" rx="9" ry="16" transform="rotate(-18 96 94)" />
+    <ellipse cx="250" cy="162" rx="13" ry="24" transform="rotate(16 250 162)" />
+    <ellipse cx="242" cy="136" rx="12" ry="22" transform="rotate(26 242 136)" />
+    <ellipse cx="235" cy="190" rx="12" ry="22" transform="rotate(-10 235 190)" />
+    <ellipse cx="220" cy="152" rx="11" ry="20" transform="rotate(8 220 152)" />
+    <ellipse cx="212" cy="182" rx="11" ry="18" transform="rotate(-14 212 182)" />
+    <ellipse cx="256" cy="118" rx="10" ry="18" transform="rotate(20 256 118)" />
+    <ellipse cx="264" cy="94" rx="9" ry="16" transform="rotate(18 264 94)" />
+  </g>
+  <g fill="#eef4ec" stroke="#3d6a4d" stroke-width="1.2">
+    <circle cx="132" cy="206" r="3.2" />
+    <circle cx="142" cy="194" r="3.2" />
+    <circle cx="126" cy="174" r="3.2" />
+    <circle cx="228" cy="206" r="3.2" />
+    <circle cx="218" cy="194" r="3.2" />
+    <circle cx="234" cy="174" r="3.2" />
+  </g>
+  <text
+    x="180"
+    y="176"
+    fill="#1f3c2c"
+    font-size="32"
+    text-anchor="middle"
+    font-family="'Times New Roman', ui-serif"
+    font-style="italic"
+  >
+    OJ
+  </text>
+</svg>

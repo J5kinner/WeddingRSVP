@@ -1,122 +1,202 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* ============================================
+   BOTANICAL WEDDING DESIGN SYSTEM
+   Mobile-first, minimalist, timeless
+   ============================================ */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
-
+/* Color Palette - Botanical Theme */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Background: warm off-white / paper feel */
+  --color-bg-paper: #F8F5F0;
+  
+  /* Primary accent: muted botanical green */
+  --color-botanical-green: #4F7052;
+  
+  /* Secondary accent: soft sage/olive */
+  --color-sage: #8DA58C;
+  
+  /* Text: very dark charcoal, not pure black */
+  --color-text-charcoal: #222222;
+  
+  /* Optional highlight/error: soft rose */
+  --color-rose: #D9A6A6;
+  
+  /* Subtle borders and dividers */
+  --color-border-subtle: rgba(34, 34, 34, 0.08);
+  --color-border-light: rgba(34, 34, 34, 0.12);
+  
+  /* Typography - will be overridden by Next.js font variables */
+  --font-serif: var(--font-serif, 'Cormorant Garamond', serif);
+  --font-sans: var(--font-sans, 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif);
+  --font-script: var(--font-script, 'Dancing Script', cursive);
+  
+  /* Spacing - mobile-first */
+  --spacing-section: 3rem; /* 48px on mobile */
+  --spacing-content: 1.5rem; /* 24px on mobile */
+  --max-width-content: 100%; /* full width on mobile */
+  
+  /* Border radius - subtle and elegant */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+/* Tablet breakpoint: 768px */
+@media (min-width: 768px) {
+  :root {
+    --spacing-section: 4rem; /* 64px */
+    --spacing-content: 2rem; /* 32px */
+    --max-width-content: 800px; /* narrow like stationery */
+  }
+}
+
+/* Desktop breakpoint: 1024px */
+@media (min-width: 1024px) {
+  :root {
+    --spacing-section: 5rem; /* 80px */
+    --spacing-content: 2.5rem; /* 40px */
+    --max-width-content: 960px; /* slightly wider */
+  }
+}
+
+/* Tailwind Theme Configuration */
+@theme inline {
+  --color-bg-paper: var(--color-bg-paper);
+  --color-botanical-green: var(--color-botanical-green);
+  --color-sage: var(--color-sage);
+  --color-text-charcoal: var(--color-text-charcoal);
+  --color-rose: var(--color-rose);
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-light: var(--color-border-light);
+  --font-serif: var(--font-serif);
+  --font-sans: var(--font-sans);
+  --font-script: var(--font-script);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-[color:var(--color-border-subtle)];
   }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[color:var(--color-bg-paper)] text-[color:var(--color-text-charcoal)];
+    font-family: var(--font-sans);
+    font-size: 16px; /* base mobile size */
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Responsive typography */
+  @media (min-width: 768px) {
+    body {
+      font-size: 17px;
+    }
+  }
+  
+  @media (min-width: 1024px) {
+    body {
+      font-size: 18px;
+    }
+  }
+  
+  /* Typography utilities */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--color-text-charcoal);
+  }
+  
+  /* Script font for initials */
+  .font-script {
+    font-family: var(--font-script);
+    font-weight: 400;
+  }
+}
+
+/* Utility Classes */
+@layer utilities {
+  /* Content container - centered, narrow on larger screens */
+  .content-container {
+    width: 100%;
+    max-width: var(--max-width-content);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--spacing-content);
+    padding-right: var(--spacing-content);
+  }
+  
+  /* Section spacing */
+  .section-spacing {
+    padding-top: var(--spacing-section);
+    padding-bottom: var(--spacing-section);
+  }
+  
+  /* Subtle divider */
+  .divider-subtle {
+    border-top: 1px solid var(--color-border-subtle);
+    margin: 2rem 0;
+  }
+  
+  /* Button styles - botanical green */
+  .btn-botanical {
+    background-color: var(--color-botanical-green);
+    color: white;
+    border-radius: var(--radius-md);
+    padding: 0.875rem 2rem;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .btn-botanical:hover {
+    background-color: #3d563f; /* darker green */
+  }
+  
+  .btn-botanical:focus {
+    outline: 2px solid var(--color-botanical-green);
+    outline-offset: 2px;
+  }
+  
+  /* Input styles - minimal, elegant */
+  .input-botanical {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background-color: white;
+    color: var(--color-text-charcoal);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+  }
+  
+  .input-botanical:focus {
+    outline: none;
+    border-color: var(--color-botanical-green);
+  }
+  
+  /* Textarea styles */
+  .textarea-botanical {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--radius-sm);
+    background-color: white;
+    color: var(--color-text-charcoal);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  .textarea-botanical:focus {
+    outline: none;
+    border-color: var(--color-botanical-green);
   }
 }
