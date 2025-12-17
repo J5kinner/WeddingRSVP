@@ -1,7 +1,9 @@
+export type GuestStatus = 'ATTENDING' | 'NOT_ATTENDING' | 'UNSELECTED';
+
 export interface GuestResponse {
   id: string;
   name: string;
-  status: boolean;
+  status: GuestStatus;
   dietNotes: string | null;
   createdAt: string;
   updatedAt: string;
