@@ -43,14 +43,15 @@ export default function SecureRSVPForm() {
   const [isLocked, setIsLocked] = useState(false)
   const [availableGuests, setAvailableGuests] = useState<InviteResponse['guests']>([])
   const [guestSuggestions, setGuestSuggestions] = useState<Record<number, { id: string; name: string; dietaryNotes?: string }[]>>({})
-  const [activeSearchRequest, setActiveSearchRequest] = useState<Record<number, number>>({}) // Track constraints to avoid race conditions
 
-  // Ensure component is mounted before rendering to avoid hydration mismatches
+  const [activeSearchRequest, setActiveSearchRequest] = useState<Record<number, number>>({})
+
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Generate CSRF token on component mount
+
   useEffect(() => {
     const generateToken = async () => {
       try {
@@ -58,7 +59,7 @@ export default function SecureRSVPForm() {
         setCsrfToken(token)
       } catch (error) {
         console.error('Failed to generate CSRF token:', error)
-        // Generate a fallback token using a simpler method
+
         const fallbackToken = Math.random().toString(36).substring(2) + Date.now().toString(36)
         setCsrfToken(fallbackToken)
       }
@@ -67,10 +68,11 @@ export default function SecureRSVPForm() {
     generateToken()
   }, [])
 
-  // Prefill form if an inviteCode is present in the URL
+  /**
+   * Prefills the form if an invite code is present in the URL.
+   */
   useEffect(() => {
     if (!mounted) return
-    // Handle both camelCase (generated) and lowercase (user typed/browser forced) param names
     const code = searchParams.get('inviteCode') || searchParams.get('invitecode')
     if (!code) return
 
@@ -96,26 +98,18 @@ export default function SecureRSVPForm() {
         // Store all guests for usage in Select dropdowns
         setAvailableGuests(invite.guests)
 
-        // Identify Primary Guest (First in list)
         const primaryGuest = invite.guests[0]
 
         const createdTime = new Date(invite.createdAt).getTime()
         const updatedTime = new Date(invite.updatedAt).getTime()
 
-        // Check if this is an update to an existing RSVP response
-        // Logic: updated > created means it was modified after creation
-        // OR if any guest has status != null effectively? 
-        // Better: check if any guest has a determined status (true/false) in DB?
-        // But for "hasExistingResponse" intended for UI "Welcome back", the timestamp check is fine.
-        // Or checking if primaryGuest status is not null?
+
 
         const hasExistingResponse = primaryGuest && (primaryGuest.status === 'ATTENDING' || primaryGuest.status === 'NOT_ATTENDING')
 
         setIsLocked(hasExistingResponse)
 
-        // Map additional guests (everyone except primary)
-        // If existing response, we only populate 'additionalGuests' form field with those currently marked 'Attending' (status: true)
-        // If new response (or reset), we start with empty additional guests
+
 
         const otherGuests = invite.guests.slice(1)
         const activeAdditionalGuests = hasExistingResponse
@@ -153,7 +147,7 @@ export default function SecureRSVPForm() {
     prefill()
   }, [searchParams, mounted])
 
-  // Debounced validation to avoid excessive validation calls
+
   const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
     const validationData = { ...currentData, [fieldName]: value }
     const result = validateRSVPData(validationData)
@@ -167,7 +161,7 @@ export default function SecureRSVPForm() {
     return !fieldError
   }, [formData])
 
-  // Validation check ensuring selected guests are in the invited list
+
   const validateGuestSelection = (name: string): boolean => {
     if (availableGuests.length === 0) return true
     return availableGuests.some(g => g.name.toLowerCase() === name.toLowerCase())
@@ -176,23 +170,17 @@ export default function SecureRSVPForm() {
   const handleInputChange = (field: keyof FormData, value: unknown) => {
     let newData = { ...formData, [field]: value }
 
-    // Auto-link ID if name matches an available guest
     if (field === 'name' && typeof value === 'string') {
       const match = availableGuests.find(g => g.name.toLowerCase() === value.toLowerCase())
       if (match) {
         newData.id = match.id
       } else {
-        // Optionally clear ID if name doesn't match anything? 
-        // But maybe they are correcting a typo and we want to keep the ID? 
-        // We'll trust the name-based strict validation.
-        // Actually, strict mode requires ID. So we must clear it if no match.
         newData.id = undefined
       }
     }
 
     setFormData(newData)
 
-    // Clear error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }))
     }
@@ -239,7 +227,6 @@ export default function SecureRSVPForm() {
   }
 
   const searchGuests = useCallback(async (index: number, query: string) => {
-    // Only search if we have a "First Last" structure starting (space detected)
     if (!query.includes(' ') || query.length < 3 || !formData.inviteCode) {
       setGuestSuggestions(prev => {
         const next = { ...prev }
@@ -258,7 +245,8 @@ export default function SecureRSVPForm() {
 
       const data = await res.json()
 
-      // Prevent race conditions: only update if this is still the active request
+
+
       setActiveSearchRequest(prev => {
         if (prev[index] === requestId) {
           setGuestSuggestions(current => ({
@@ -277,28 +265,11 @@ export default function SecureRSVPForm() {
     const updatedGuests = [...formData.additionalGuests]
     const guest = { ...updatedGuests[index], [field]: value }
 
-    // If Changing Name:
     if (field === 'name') {
-      // Clear ID if name changes significantly (logic is tricky, simple valid: clear ID if user types manually)
-      // But we want to keep ID if they select from list.
-      // For now, if they type, we assume it's a "New" entry unless they select suggestion.
-      // However, we preserve ID if it was already set, until they change it?
-      // Safest: Clear ID on any manual input change to force re-selection or treated as new.
-      // But that breaks "Click suggestion -> Edit typo".
-      // Let's Just Clear ID if they type.
       if (guest.id) {
-        guest.id = undefined // Treat as new/unlinked until re-linked
+        guest.id = undefined
       }
 
-      // Trigger Search
-      // We use a small timeout to debounce inside here or rely on the fact that useEffect isn't used
-      // Let's just call it directly but we should debounce.
-      // A simple timeout ref implementation:
-      const timerId = setTimeout(() => searchGuests(index, value), 300)
-      // We need to store this timer to clear previous ones. 
-      // Since we didn't add a ref for timers, we'll accept basic throttled behavior or just run it.
-      // Given "letter by letter", 300ms debounce is good.
-      // *Quick fix*: Just run it. The browser handles fetch cancellation decently, or our `activeSearchRequest` state handles race conditions.
       searchGuests(index, value)
     }
 
@@ -321,11 +292,10 @@ export default function SecureRSVPForm() {
       ...updatedGuests[index],
       name: suggestion.name,
       id: suggestion.id,
-      dietaryNotes: suggestion.dietaryNotes || updatedGuests[index].dietaryNotes // Prefill diet if available
+      dietaryNotes: suggestion.dietaryNotes || updatedGuests[index].dietaryNotes
     }
     setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
 
-    // Clear suggestions
     setGuestSuggestions(prev => {
       const next = { ...prev }
       delete next[index]
@@ -373,12 +343,6 @@ export default function SecureRSVPForm() {
         setSubmitStatus('success')
         setSubmitMessage('Thank you for your RSVP! We saved your response below. You can edit it anytime.')
         // Update form data to reflect what was saved (including any ID confirmations)
-        // Re-mapping from backend response ensuring we have correct IDs
-        // However, the backend returns the full InviteResponse, but here we just have partial data.
-        // Let's just trust our local state but lock it.
-        // Or better, we should update our local "availableGuests" to match the backend if anything changed, 
-        // but for now, just Locking is enough.
-
         setFormData({
           id: validationResult.sanitizedData.id,
           name: validationResult.sanitizedData.name,
@@ -420,8 +384,7 @@ export default function SecureRSVPForm() {
     setSubmitMessage('You can update your RSVP below.')
   }
 
-  // Prevent hydration mismatch by ensuring consistent initial render
-  // The form structure is consistent, but searchParams-dependent logic only runs after mount
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -437,7 +400,7 @@ export default function SecureRSVPForm() {
         </div>
       )}
 
-      {/* Datalist for Guest Suggestions */}
+
       {availableGuests.length > 0 && (
         <datalist id="guest-options">
           {availableGuests.map((guest) => (
@@ -521,7 +484,6 @@ export default function SecureRSVPForm() {
         </div>
       ) : (
         <>
-          {/* Name Field */}
           <div>
             <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
               Name *
@@ -543,7 +505,6 @@ export default function SecureRSVPForm() {
             </p>
           </div>
 
-          {/* Attending Field */}
           <div>
             <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-3">
               Will you be attending? *
@@ -579,7 +540,6 @@ export default function SecureRSVPForm() {
 
           {formData.attending === 'ATTENDING' && (
             <>
-              {/* Additional Guests */}
               <div className="space-y-3">
                 <div className="flex items-start justify-between flex-wrap gap-2">
                   <div>
@@ -676,7 +636,6 @@ export default function SecureRSVPForm() {
                 </p>
               </div>
 
-              {/* Dietary Restrictions */}
               <div>
                 <label htmlFor="dietaryNotes" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
                   Dietary Restrictions or Special Requests <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(optional, 500 character limit)</span>
@@ -706,7 +665,6 @@ export default function SecureRSVPForm() {
             </>
           )}
 
-          {/* Message Field */}
           <div>
             <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
               Message <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(300 character limit, optional)</span>
@@ -731,7 +689,6 @@ export default function SecureRSVPForm() {
             </p>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isSubmitting || isPrefilling}
@@ -750,7 +707,6 @@ export default function SecureRSVPForm() {
             )}
           </button>
 
-          {/* Security Notice */}
           <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-md)] p-4">
             <p className="text-sm text-[color:var(--color-botanical-green)]">
               🔒 Your information is secure. We use industry-standard security practices to protect your data.

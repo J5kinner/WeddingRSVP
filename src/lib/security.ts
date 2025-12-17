@@ -51,6 +51,10 @@ export const VALIDATION_CONFIG = {
   }
 } as const;
 
+/**
+ * Sanitizes input string to prevent XSS and DoS attacks.
+ * Trims whitespace, limits length, and removes dangerous characters/protocols.
+ */
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') {
     return '';
@@ -58,10 +62,10 @@ export function sanitizeInput(input: string): string {
 
   return input
     .trim()
-    .slice(0, 1000) // Hard limit to prevent DoS
-    .replace(/[<>]/g, '') // Remove potentially dangerous characters
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, ''); // Remove event handlers
+    .slice(0, 1000)
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '');
 }
 
 export function sanitizeHTML(input: string): string {

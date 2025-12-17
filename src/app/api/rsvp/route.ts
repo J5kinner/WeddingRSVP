@@ -114,8 +114,7 @@ async function fetchInviteWithGuestsByCode(inviteCode: string): Promise<InviteRe
 }
 
 /**
- * GET /api/rsvp
- * Fetches all RSVP responses with security headers
+ * Fetches all RSVP responses with security headers.
  */
 export async function GET(request: NextRequest) {
   const rateLimitDisabled = process.env.DISABLE_RSVP_RATE_LIMIT === 'true'
@@ -206,12 +205,10 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/rsvp
- * Creates or updates an RSVP entry with comprehensive security validation
+ * Creates or updates an RSVP entry with comprehensive security validation.
  */
 export async function POST(request: NextRequest) {
   const rateLimitDisabled = process.env.DISABLE_RSVP_RATE_LIMIT === 'true'
-  // Verify request origin first
   if (!verifyRequestOrigin(request)) {
     return NextResponse.json(
       { error: 'Invalid request origin' },
@@ -306,7 +303,6 @@ export async function POST(request: NextRequest) {
     }
 
     if (inviteCodeFromBody) {
-      // EXISTING INVITE LOGIC
       const existingInviteResult = await sql`
         SELECT id FROM invites WHERE "inviteCode" = ${inviteCodeFromBody} LIMIT 1
       `
@@ -323,7 +319,6 @@ export async function POST(request: NextRequest) {
 
       const inviteId = (existingInviteResult[0] as { id: string }).id
 
-      // Fetch existing guests for this invite to validate IDs
       const existingGuests = (await sql`
         SELECT id FROM guests WHERE "inviteId" = ${inviteId}
       `) as { id: string }[]
@@ -331,19 +326,15 @@ export async function POST(request: NextRequest) {
       const existingGuestIds = new Set(existingGuests.map(g => g.id))
       const processedGuestIds = new Set<string>()
 
-      // Optimize: Update invite details once
       await sql`
         UPDATE invites 
         SET message = ${messageValue}, "updatedAt" = NOW()
         WHERE id = ${inviteId}
       `
 
-      // Process submitted guests
       for (const guest of sanitizedData.guests) {
         if (guest.id) {
-          // Check if guest belongs to THIS invite
           if (existingGuestIds.has(guest.id)) {
-            // Standard Update for own guest
             await sql`
               UPDATE guests
               SET 
@@ -355,8 +346,6 @@ export async function POST(request: NextRequest) {
             `
             processedGuestIds.add(guest.id)
           } else {
-            // Guest from ANOTHER invite (Cross-Invite Link)
-            // 1. Verify existence and Update status on their ORIGINAL invite
             const result = await sql`
               UPDATE guests
               SET status = ${guest.status}, "updatedAt" = NOW()
@@ -365,14 +354,11 @@ export async function POST(request: NextRequest) {
             `
 
             if (result.length > 0) {
-              // 2. Add them as a "Plus One" to THIS invite so they appear in the UI
-              // We generate a NEW ID for this "link" record
               await sql`
                 INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
                 VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
               `
             } else {
-              // Invalid ID passed? Treat as new guest entirely
               await sql`
                 INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
                 VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
@@ -380,7 +366,6 @@ export async function POST(request: NextRequest) {
             }
           }
         } else {
-          // New Guest: Create (Relaxed Mode - Allow Plus Ones)
           await sql`
             INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
             VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
@@ -388,8 +373,6 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Handle existing guests NOT in the submission (Mark as Not Attending)
-      // We don't delete them, we just set status to false so they stay in the invite list
       for (const existingId of existingGuestIds) {
         if (!processedGuestIds.has(existingId)) {
           await sql`
@@ -419,11 +402,6 @@ export async function POST(request: NextRequest) {
         headers
       })
     }
-
-    // NEW INVITE LOGIC (No Code) - Used for manually creating invites via form if enabled (Public implementation)
-    // Or if this was an admin function, but here it seems to be public RSVP.
-    // If public doesn't have a code, they create a new one?
-    // Based on previous code, yes.
 
     const inviteId = randomUUID()
     const inviteCode = randomUUID()
@@ -474,8 +452,7 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * OPTIONS /api/rsvp
- * Preflight request handler for CORS
+ * Preflight request handler for CORS.
  */
 export async function OPTIONS() {
   return NextResponse.json({}, {

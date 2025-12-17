@@ -1,6 +1,6 @@
 /**
- * Rate limiting system for API endpoints
- * Prevents spam submissions and DoS attacks
+ * Rate limiting system for API endpoints.
+ * Prevents spam submissions and DoS attacks.
  */
 
 interface RateLimitStore {
@@ -27,7 +27,7 @@ interface RateLimitResult {
 }
 
 /**
- * Rate limiting configuration for different endpoints
+ * Rate limiting configuration for different endpoints.
  */
 export const RATE_LIMIT_CONFIGS = {
   rsvp: {
@@ -60,30 +60,25 @@ export const RATE_LIMIT_CONFIGS = {
 } as const;
 
 /**
- * Get client identifier from request
- * Uses multiple methods for reliable identification
+ * Get client identifier from request.
+ * Uses `x-forwarded-for`, `cf-connecting-ip`, `x-real-ip`, or falls back to `unknown`.
  */
 export function getClientId(request: Request): string {
-  // Check for forwarded headers first (for proxy setups)
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
     return forwardedFor.split(',')[0].trim();
   }
 
-  // Check for CF-Connecting-IP (Cloudflare)
   const cfConnectingIp = request.headers.get('cf-connecting-ip');
   if (cfConnectingIp) {
     return cfConnectingIp;
   }
 
-  // Check for X-Real-IP (nginx)
   const realIp = request.headers.get('x-real-ip');
   if (realIp) {
     return realIp;
   }
 
-  // Fallback to remote address (for development)
-  // Note: This won't work in serverless environments without additional setup
   return 'unknown';
 }
 
@@ -97,14 +92,15 @@ export function checkRateLimit(
   const now = Date.now();
   const key = `${clientId}:${config.windowMs}:${config.maxRequests}`;
 
-  // Clean up expired entries periodically
-  if (Math.random() < 0.01) { // 1% chance to cleanup
+  // Clean up expired entries periodically (1% chance)
+  if (Math.random() < 0.01) {
     cleanupExpiredEntries(now);
   }
 
   const record = rateLimitStore[key];
 
-  // Check if window has expired
+
+
   if (!record || now > record.resetTime) {
     rateLimitStore[key] = {
       count: 1,
