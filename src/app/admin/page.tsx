@@ -2,7 +2,7 @@ import RSVPList from '@/app/components/RSVPList'
 import { neon } from '@neondatabase/serverless'
 import AdminGuestForm from './AdminGuestForm'
 import AdminCsvImport from './AdminCsvImport'
-import type { InviteResponse } from '@/types/rsvp'
+import type { InviteResponse, GuestStatus } from '@/types/rsvp'
 import { resetInvite, deleteInvite } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -23,7 +23,7 @@ type RawInviteRow = {
   inviteUpdatedAt: string | Date
   guestId: string | null
   guestName: string | null
-  guestStatus: boolean | null
+  guestStatus: GuestStatus | null
   guestDietNotes: string | null
   guestCreatedAt: string | Date | null
   guestUpdatedAt: string | Date | null
@@ -55,7 +55,7 @@ function mapInviteRows(rows: RawInviteRow[]): InviteResponse[] {
       invite.guests.push({
         id: row.guestId,
         name: row.guestName || '',
-        status: Boolean(row.guestStatus),
+        status: row.guestStatus as GuestStatus || 'UNSELECTED',
         dietNotes: row.guestDietNotes,
         createdAt:
           row.guestCreatedAt instanceof Date

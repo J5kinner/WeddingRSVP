@@ -4,7 +4,7 @@ import { validateRSVPData, getSecurityHeaders, createSafeErrorMessage } from '@/
 import { checkRateLimit, getClientId, RATE_LIMIT_CONFIGS } from '@/lib/rateLimiter'
 import { getCSRFTokenFromRequest, verifyRequestOrigin } from '@/lib/csrf'
 import { neon } from '@neondatabase/serverless'
-import type { InviteResponse } from '@/types/rsvp'
+import type { InviteResponse, GuestStatus } from '@/types/rsvp'
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -16,7 +16,7 @@ type RawInviteRow = {
   inviteUpdatedAt: string | Date
   guestId: string | null
   guestName: string | null
-  guestStatus: boolean | null
+  guestStatus: GuestStatus | null
   guestDietNotes: string | null
   guestCreatedAt: string | Date | null
   guestUpdatedAt: string | Date | null
@@ -48,7 +48,7 @@ function mapInviteRows(rows: RawInviteRow[]): InviteResponse[] {
       invite.guests.push({
         id: row.guestId,
         name: row.guestName || '',
-        status: Boolean(row.guestStatus),
+        status: row.guestStatus as GuestStatus || 'UNSELECTED',
         dietNotes: row.guestDietNotes,
         createdAt:
           row.guestCreatedAt instanceof Date
@@ -124,12 +124,12 @@ export async function GET(request: NextRequest) {
   const clientId = getClientId(request)
   const rateLimitResult = rateLimitDisabled
     ? {
-        allowed: true,
-        remaining: RATE_LIMIT_CONFIGS.rsvpRead.maxRequests,
-        resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvpRead.windowMs
-      }
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIGS.rsvpRead.maxRequests,
+      resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvpRead.windowMs
+    }
     : checkRateLimit(clientId, RATE_LIMIT_CONFIGS.rsvpRead)
-  
+
   if (!rateLimitResult.allowed) {
     return new NextResponse(
       JSON.stringify({
@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching RSVPs:', error)
     return NextResponse.json(
       { error: createSafeErrorMessage(error) },
-      { 
+      {
         status: 500,
         headers: getSecurityHeaders()
       }
@@ -225,12 +225,12 @@ export async function POST(request: NextRequest) {
   const clientId = getClientId(request)
   const rateLimitResult = rateLimitDisabled
     ? {
-        allowed: true,
-        remaining: RATE_LIMIT_CONFIGS.rsvp.maxRequests,
-        resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvp.windowMs
-      }
+      allowed: true,
+      remaining: RATE_LIMIT_CONFIGS.rsvp.maxRequests,
+      resetTime: Date.now() + RATE_LIMIT_CONFIGS.rsvp.windowMs
+    }
     : checkRateLimit(clientId, RATE_LIMIT_CONFIGS.rsvp)
-  
+
   if (!rateLimitResult.allowed) {
     return new NextResponse(
       JSON.stringify({
@@ -275,8 +275,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const validationResult = validateRSVPData(body)
-    
+    const validationResult = validateRSVPData(body, { requireAttendance: false })
+
     if (!validationResult.isValid) {
       return NextResponse.json(
         {
@@ -306,11 +306,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (inviteCodeFromBody) {
-      const existingInvite = await sql`
+      // EXISTING INVITE LOGIC
+      const existingInviteResult = await sql`
         SELECT id FROM invites WHERE "inviteCode" = ${inviteCodeFromBody} LIMIT 1
       `
 
-      if (!Array.isArray(existingInvite) || existingInvite.length === 0) {
+      if (!Array.isArray(existingInviteResult) || existingInviteResult.length === 0) {
         return NextResponse.json(
           { error: 'Invalid invite code' },
           {
@@ -320,30 +321,90 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const inviteId = (existingInvite[0] as { id: string }).id
+      const inviteId = (existingInviteResult[0] as { id: string }).id
 
+      // Fetch existing guests for this invite to validate IDs
+      const existingGuests = (await sql`
+        SELECT id FROM guests WHERE "inviteId" = ${inviteId}
+      `) as { id: string }[]
+
+      const existingGuestIds = new Set(existingGuests.map(g => g.id))
+      const processedGuestIds = new Set<string>()
+
+      // Optimize: Update invite details once
       await sql`
         UPDATE invites 
         SET message = ${messageValue}, "updatedAt" = NOW()
         WHERE id = ${inviteId}
       `
 
-      await sql`
-        DELETE FROM guests WHERE "inviteId" = ${inviteId}
-      `
-
+      // Process submitted guests
       for (const guest of sanitizedData.guests) {
-        await sql`
-          INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
-          VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
-        `
+        if (guest.id) {
+          // Check if guest belongs to THIS invite
+          if (existingGuestIds.has(guest.id)) {
+            // Standard Update for own guest
+            await sql`
+              UPDATE guests
+              SET 
+                name = ${guest.name}, 
+                status = ${guest.status}, 
+                "dietNotes" = ${guest.dietNotes || null}, 
+                "updatedAt" = NOW()
+              WHERE id = ${guest.id} AND "inviteId" = ${inviteId}
+            `
+            processedGuestIds.add(guest.id)
+          } else {
+            // Guest from ANOTHER invite (Cross-Invite Link)
+            // 1. Verify existence and Update status on their ORIGINAL invite
+            const result = await sql`
+              UPDATE guests
+              SET status = ${guest.status}, "updatedAt" = NOW()
+              WHERE id = ${guest.id}
+              RETURNING id
+            `
+
+            if (result.length > 0) {
+              // 2. Add them as a "Plus One" to THIS invite so they appear in the UI
+              // We generate a NEW ID for this "link" record
+              await sql`
+                INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
+                VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
+              `
+            } else {
+              // Invalid ID passed? Treat as new guest entirely
+              await sql`
+                INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
+                VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
+              `
+            }
+          }
+        } else {
+          // New Guest: Create (Relaxed Mode - Allow Plus Ones)
+          await sql`
+            INSERT INTO guests (id, "inviteId", name, status, "dietNotes", "createdAt", "updatedAt")
+            VALUES (${randomUUID()}, ${inviteId}, ${guest.name}, ${guest.status}, ${guest.dietNotes || null}, NOW(), NOW())
+          `
+        }
+      }
+
+      // Handle existing guests NOT in the submission (Mark as Not Attending)
+      // We don't delete them, we just set status to false so they stay in the invite list
+      for (const existingId of existingGuestIds) {
+        if (!processedGuestIds.has(existingId)) {
+          await sql`
+            UPDATE guests
+            SET status = 'NOT_ATTENDING', "updatedAt" = NOW()
+            WHERE id = ${existingId} AND "inviteId" = ${inviteId}
+          `
+        }
       }
 
       const invite = await fetchInviteWithGuests(inviteId)
       if (!invite) {
         throw new Error('Invite could not be loaded after save')
       }
-      
+
       const headers = getSecurityHeaders()
       headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.rsvp.maxRequests))
       headers.set('X-RateLimit-Remaining', String(
@@ -352,12 +413,17 @@ export async function POST(request: NextRequest) {
       headers.set('X-RateLimit-Reset', String(
         rateLimitDisabled ? 0 : Math.ceil(rateLimitResult.resetTime / 1000)
       ))
-      
+
       return NextResponse.json(invite, {
         status: 200,
         headers
       })
     }
+
+    // NEW INVITE LOGIC (No Code) - Used for manually creating invites via form if enabled (Public implementation)
+    // Or if this was an admin function, but here it seems to be public RSVP.
+    // If public doesn't have a code, they create a new one?
+    // Based on previous code, yes.
 
     const inviteId = randomUUID()
     const inviteCode = randomUUID()
@@ -378,7 +444,7 @@ export async function POST(request: NextRequest) {
     if (!invite) {
       throw new Error('Invite could not be loaded after save')
     }
-    
+
     const headers = getSecurityHeaders()
     headers.set('X-RateLimit-Limit', String(RATE_LIMIT_CONFIGS.rsvp.maxRequests))
     headers.set('X-RateLimit-Remaining', String(
@@ -387,16 +453,16 @@ export async function POST(request: NextRequest) {
     headers.set('X-RateLimit-Reset', String(
       rateLimitDisabled ? 0 : Math.ceil(rateLimitResult.resetTime / 1000)
     ))
-    
+
     return NextResponse.json(invite, {
       status: 201,
       headers
     })
   } catch (error: unknown) {
     console.error('Error creating/updating RSVP:', error)
-    
+
     const errorMessage = createSafeErrorMessage(error)
-    
+
     return NextResponse.json(
       { error: errorMessage },
       {
