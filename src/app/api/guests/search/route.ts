@@ -95,8 +95,8 @@ export async function GET(request: NextRequest) {
       LIMIT 10
     `
 
-
-        const results = rawResults.map((guest: any) => ({
+        type GuestRecord = { id: string; name: string; dietNotes: string | null }
+        const results = (rawResults as GuestRecord[]).map((guest) => ({
             id: guest.id,
             name: guest.name,
             dietaryNotes: guest.dietNotes

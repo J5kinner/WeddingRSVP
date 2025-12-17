@@ -188,8 +188,9 @@ export function validateRSVPData(
     status = rawAttending as GuestStatus;
   }
 
+  const dataAsRecord = data as Record<string, unknown>;
   const sanitizedData = {
-    id: typeof data.name === 'string' && (data as any).id ? (data as any).id : undefined,
+    id: typeof dataAsRecord.id === 'string' ? dataAsRecord.id : undefined,
     name: sanitizeInput(typeof data.name === 'string' ? data.name : ''),
     attending: status,
     dietaryNotes: sanitizeInput(typeof data.dietaryNotes === 'string' ? data.dietaryNotes : ''),
@@ -197,8 +198,6 @@ export function validateRSVPData(
     additionalGuests: sanitizedAdditionalGuests,
     guests: [] as SanitizedGuest[]
   };
-
-  if ((data as any).id) sanitizedData.id = (data as any).id;
 
 
   const nameValidation = validateName(sanitizedData.name);

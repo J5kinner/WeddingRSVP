@@ -47,10 +47,6 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
   )
   const pendingGuests = totalGuests - attendingGuests - declinedGuests
 
-  const attendingInvites = rsvps.filter((invite) =>
-    invite.guests.some((guest) => guest.status === 'ATTENDING')
-  ).length
-
   return (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -44,8 +44,6 @@ export default function SecureRSVPForm() {
   const [availableGuests, setAvailableGuests] = useState<InviteResponse['guests']>([])
   const [guestSuggestions, setGuestSuggestions] = useState<Record<number, { id: string; name: string; dietaryNotes?: string }[]>>({})
 
-  const [activeSearchRequest, setActiveSearchRequest] = useState<Record<number, number>>({})
-
 
   useEffect(() => {
     setMounted(true)
@@ -99,11 +97,6 @@ export default function SecureRSVPForm() {
         setAvailableGuests(invite.guests)
 
         const primaryGuest = invite.guests[0]
-
-        const createdTime = new Date(invite.createdAt).getTime()
-        const updatedTime = new Date(invite.updatedAt).getTime()
-
-
 
         const hasExistingResponse = primaryGuest && (primaryGuest.status === 'ATTENDING' || primaryGuest.status === 'NOT_ATTENDING')
 
@@ -168,7 +161,7 @@ export default function SecureRSVPForm() {
   }
 
   const handleInputChange = (field: keyof FormData, value: unknown) => {
-    let newData = { ...formData, [field]: value }
+    const newData = { ...formData, [field]: value }
 
     if (field === 'name' && typeof value === 'string') {
       const match = availableGuests.find(g => g.name.toLowerCase() === value.toLowerCase())
@@ -236,26 +229,16 @@ export default function SecureRSVPForm() {
       return
     }
 
-    const requestId = Date.now()
-    setActiveSearchRequest(prev => ({ ...prev, [index]: requestId }))
-
     try {
       const res = await fetch(`/api/guests/search?inviteCode=${encodeURIComponent(formData.inviteCode)}&query=${encodeURIComponent(query)}`)
       if (!res.ok) return
 
       const data = await res.json()
 
-
-
-      setActiveSearchRequest(prev => {
-        if (prev[index] === requestId) {
-          setGuestSuggestions(current => ({
-            ...current,
-            [index]: data.results || []
-          }))
-        }
-        return prev
-      })
+      setGuestSuggestions(current => ({
+        ...current,
+        [index]: data.results || []
+      }))
     } catch (e) {
       console.error('Search failed', e)
     }
