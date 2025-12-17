@@ -1,3 +1,5 @@
+'use client'
+
 import { sanitizeHTML } from '@/lib/security'
 import type { InviteResponse } from '@/types/rsvp'
 
@@ -36,34 +38,35 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
 
   const totalGuests = rsvps.reduce((sum, invite) => sum + invite.guests.length, 0)
   const attendingGuests = rsvps.reduce(
-    (sum, invite) => sum + invite.guests.filter((guest) => guest.status).length,
+    (sum, invite) => sum + invite.guests.filter((guest) => guest.status === 'ATTENDING').length,
     0
   )
-  const notAttendingGuests = totalGuests - attendingGuests
-  const attendingInvites = rsvps.filter((invite) =>
-    invite.guests.some((guest) => guest.status)
-  ).length
+  const declinedGuests = rsvps.reduce(
+    (sum, invite) => sum + invite.guests.filter((guest) => guest.status === 'NOT_ATTENDING').length,
+    0
+  )
+  const pendingGuests = totalGuests - attendingGuests - declinedGuests
 
   return (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="font-semibold text-blue-900 mb-2">RSVP Summary</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-blue-700">Invites Received:</span>
-            <span className="ml-2 font-semibold">{rsvps.length}</span>
+            <span className="text-blue-700 block">Invites:</span>
+            <span className="font-semibold text-lg">{rsvps.length}</span>
           </div>
           <div>
-            <span className="text-blue-700">Attending Invites:</span>
-            <span className="ml-2 font-semibold">{attendingInvites}</span>
+            <span className="text-blue-700 block">Attending Guests:</span>
+            <span className="font-semibold text-lg text-green-700">{attendingGuests}</span>
           </div>
           <div>
-            <span className="text-blue-700">Attending Guests:</span>
-            <span className="ml-2 font-semibold">{attendingGuests}</span>
+            <span className="text-blue-700 block">Declined Guests:</span>
+            <span className="font-semibold text-lg text-gray-700">{declinedGuests}</span>
           </div>
           <div>
-            <span className="text-blue-700">Guests Not Attending:</span>
-            <span className="ml-2 font-semibold">{notAttendingGuests}</span>
+            <span className="text-blue-700 block">Pending/No Response:</span>
+            <span className="font-semibold text-lg text-yellow-700">{pendingGuests}</span>
           </div>
         </div>
       </div>
@@ -72,31 +75,42 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
         <h3 className="text-lg font-semibold text-gray-900">All RSVPs</h3>
         <div className="space-y-3">
           {rsvps.map((invite) => {
-            const attendingCount = invite.guests.filter((guest) => guest.status).length
+            const attendingCount = invite.guests.filter((guest) => guest.status === 'ATTENDING').length
             const totalCount = invite.guests.length
+            const isFullyDeclined = invite.guests.every(g => g.status === 'NOT_ATTENDING')
+            const isUnanswered = invite.guests.every(g => g.status === 'UNSELECTED')
             const primaryGuest = invite.guests[0]?.name || 'Guest'
+
+            let statusLabel = 'Mixed/Pending'
+            let statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200'
+
+            if (attendingCount > 0) {
+              statusLabel = 'Attending'
+              statusColor = 'bg-green-100 text-green-800 border-green-200'
+            } else if (isFullyDeclined) {
+              statusLabel = 'Not Attending'
+              statusColor = 'bg-gray-100 text-gray-800 border-gray-200'
+            } else if (isUnanswered) {
+              statusLabel = 'No Response'
+              statusColor = 'bg-blue-50 text-blue-800 border-blue-200'
+            }
 
             return (
               <div
                 key={invite.id}
-                className={`border rounded-lg p-4 ${
-                  attendingCount > 0
-                    ? 'border-green-200 bg-green-50'
-                    : 'border-gray-200 bg-gray-50'
-                }`}
+                className={`border rounded-lg p-4 ${attendingCount > 0
+                  ? 'border-green-200 bg-green-50'
+                  : isFullyDeclined ? 'border-gray-200 bg-gray-50' : 'border-blue-100 bg-white'
+                  }`}
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-gray-900">{sanitizeHTML(primaryGuest)}</h4>
                       <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          attendingCount > 0
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
+                        className={`text-xs px-2 py-1 rounded ${statusColor}`}
                       >
-                        {attendingCount > 0 ? 'Attending' : 'Not Attending'}
+                        {statusLabel}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500">Invite code: {sanitizeHTML(invite.inviteCode)}</p>
@@ -152,11 +166,18 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                         )}
                       </div>
                       <span
-                        className={`text-xs px-2 py-1 rounded ${
-                          guest.status ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}
+                        className={`text-xs px-2 py-1 rounded ${guest.status === 'ATTENDING'
+                          ? 'bg-green-100 text-green-800'
+                          : guest.status === 'NOT_ATTENDING'
+                            ? 'bg-gray-100 text-gray-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                          }`}
                       >
-                        {guest.status ? 'Attending' : 'Not Attending'}
+                        {guest.status === 'ATTENDING'
+                          ? 'Attending'
+                          : guest.status === 'NOT_ATTENDING'
+                            ? 'Not Attending'
+                            : 'Pending'}
                       </span>
                     </div>
                   ))}

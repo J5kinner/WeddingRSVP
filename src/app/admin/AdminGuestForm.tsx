@@ -43,11 +43,11 @@ export default function AdminGuestForm() {
     event.preventDefault()
     const validationResult = validateRSVPData({
       ...formData,
-      attending: false,
+      attending: 'UNSELECTED',
       dietaryNotes: '',
       message: '',
       additionalGuests: []
-    })
+    }, { requireAttendance: false })
 
     if (!validationResult.isValid) {
       setFormErrors(validationResult.errors)
@@ -67,7 +67,7 @@ export default function AdminGuestForm() {
         },
         body: JSON.stringify({
           name: validationResult.sanitizedData.name,
-          attending: false,
+          attending: 'UNSELECTED',
           dietaryNotes: '',
           message: '',
           additionalGuests: [],
@@ -110,11 +110,10 @@ export default function AdminGuestForm() {
             setFormData({ ...formData, name: e.target.value })
             setFormErrors((prev) => ({ ...prev, name: '' }))
           }}
-          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${
-            formErrors.name
-              ? 'border-red-500 focus:ring-red-200'
-              : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
-          }`}
+          className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:outline-none transition-colors ${formErrors.name
+            ? 'border-red-500 focus:ring-red-200'
+            : 'border-gray-300 focus:ring-blue-500 focus:border-transparent'
+            }`}
           maxLength={100}
           placeholder="Guest full name"
           required
@@ -124,11 +123,10 @@ export default function AdminGuestForm() {
 
       {submitMessage && (
         <div
-          className={`p-3 rounded-lg text-sm ${
-            submitStatus === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
-          }`}
+          className={`p-3 rounded-lg text-sm ${submitStatus === 'success'
+            ? 'bg-green-50 text-green-800 border border-green-200'
+            : 'bg-red-50 text-red-800 border border-red-200'
+            }`}
         >
           {sanitizeHTML(submitMessage)}
         </div>

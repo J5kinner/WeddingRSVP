@@ -3,39 +3,38 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
-/** 
-  * RSVP models for tracking wedding guest responses.
-  * 
-  */
+
+enum GuestStatus {
+  ATTENDING
+  NOT_ATTENDING
+  UNSELECTED
+}
+
 model Invite {
   id         String   @id @default(cuid())
   inviteCode String   @unique
   message    String?
-
-  guests     Guest[]
-
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  guests     Guest[]
 
-  @@map("invites")
   @@index([inviteCode])
+  @@map("invites")
 }
 
 model Guest {
-  id        String     @id @default(cuid())
-  invite    Invite     @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
   inviteId  String
-
   name      String
-  status    Boolean
+  status    GuestStatus @default(UNSELECTED)
   dietNotes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  invite    Invite   @relation(fields: [inviteId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-
-  @@map("guests")
   @@index([inviteId])
   @@index([status])
+  @@map("guests")
 }

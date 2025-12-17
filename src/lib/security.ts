@@ -4,6 +4,8 @@
  */
 
 
+import type { GuestStatus } from '@/types/rsvp';
+
 interface RawRSVPFormData {
   name?: unknown;
   attending?: unknown;
@@ -13,14 +15,16 @@ interface RawRSVPFormData {
 }
 
 export interface AdditionalGuest {
+  id?: string;
   name: string;
   dietaryNotes: string;
 }
 
 export interface SanitizedGuest {
+  id?: string;
   name: string;
   dietNotes: string;
-  status: boolean;
+  status: GuestStatus;
 }
 
 
@@ -47,24 +51,28 @@ export const VALIDATION_CONFIG = {
   }
 } as const;
 
+/**
+ * Sanitizes input string to prevent XSS and DoS attacks.
+ * Trims whitespace, limits length, and removes dangerous characters/protocols.
+ */
 export function sanitizeInput(input: string): string {
   if (typeof input !== 'string') {
     return '';
   }
-  
+
   return input
     .trim()
-    .slice(0, 1000) // Hard limit to prevent DoS
-    .replace(/[<>]/g, '') // Remove potentially dangerous characters
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+\s*=/gi, ''); // Remove event handlers
+    .slice(0, 1000)
+    .replace(/[<>]/g, '')
+    .replace(/javascript:/gi, '')
+    .replace(/on\w+\s*=/gi, '');
 }
 
 export function sanitizeHTML(input: string): string {
   if (typeof input !== 'string') {
     return '';
   }
-  
+
   return input
     .replace(/&/g, '&')
     .replace(/</g, '<')
@@ -76,22 +84,22 @@ export function sanitizeHTML(input: string): string {
 
 export function validateName(name: string): { isValid: boolean; error?: string } {
   const sanitized = sanitizeInput(name);
-  
+
   if (!sanitized) {
     return { isValid: false, error: 'Name is required' };
   }
-  
+
   if (sanitized.length > VALIDATION_CONFIG.name.maxLength) {
-    return { 
-      isValid: false, 
-      error: `Name must be less than ${VALIDATION_CONFIG.name.maxLength} characters` 
+    return {
+      isValid: false,
+      error: `Name must be less than ${VALIDATION_CONFIG.name.maxLength} characters`
     };
   }
-  
+
   if (!VALIDATION_CONFIG.name.pattern.test(sanitized)) {
     return { isValid: false, error: VALIDATION_CONFIG.name.errorMessage };
   }
-  
+
   return { isValid: true };
 }
 
@@ -99,20 +107,20 @@ export function validateDietaryNotes(notes: string): { isValid: boolean; error?:
   if (!notes.trim()) {
     return { isValid: true }; // Optional field
   }
-  
+
   const sanitized = sanitizeInput(notes);
-  
+
   if (sanitized.length > VALIDATION_CONFIG.dietaryNotes.maxLength) {
-    return { 
-      isValid: false, 
-      error: `Dietary notes must be less than ${VALIDATION_CONFIG.dietaryNotes.maxLength} characters` 
+    return {
+      isValid: false,
+      error: `Dietary notes must be less than ${VALIDATION_CONFIG.dietaryNotes.maxLength} characters`
     };
   }
-  
+
   if (!VALIDATION_CONFIG.dietaryNotes.allowedChars.test(sanitized)) {
     return { isValid: false, error: VALIDATION_CONFIG.dietaryNotes.errorMessage };
   }
-  
+
   return { isValid: true };
 }
 
@@ -120,20 +128,20 @@ export function validateMessage(message: string): { isValid: boolean; error?: st
   if (!message.trim()) {
     return { isValid: true }; // Optional field
   }
-  
+
   const sanitized = sanitizeInput(message);
-  
+
   if (sanitized.length > VALIDATION_CONFIG.message.maxLength) {
-    return { 
-      isValid: false, 
-      error: `Message must be less than ${VALIDATION_CONFIG.message.maxLength} characters` 
+    return {
+      isValid: false,
+      error: `Message must be less than ${VALIDATION_CONFIG.message.maxLength} characters`
     };
   }
-  
+
   if (!VALIDATION_CONFIG.message.allowedChars.test(sanitized)) {
     return { isValid: false, error: VALIDATION_CONFIG.message.errorMessage };
   }
-  
+
   return { isValid: true };
 }
 
@@ -142,8 +150,9 @@ export interface RSVPValidationResult {
   isValid: boolean;
   errors: Record<string, string>;
   sanitizedData: {
+    id?: string;
     name: string;
-    attending: boolean;
+    attending: GuestStatus;
     dietaryNotes: string;
     message: string;
     additionalGuests: AdditionalGuest[];
@@ -151,7 +160,10 @@ export interface RSVPValidationResult {
   };
 }
 
-export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
+export function validateRSVPData(
+  data: RawRSVPFormData & { id?: string },
+  options: { requireAttendance?: boolean } = { requireAttendance: true }
+): RSVPValidationResult {
   const errors: Record<string, string> = {};
   const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1;
 
@@ -160,26 +172,33 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
 
   const sanitizedAdditionalGuests: AdditionalGuest[] = Array.isArray(data.additionalGuests)
     ? data.additionalGuests
-        .slice(0, MAX_ADDITIONAL_GUESTS)
-        .map((guest) => {
-          const safeGuest = typeof guest === 'object' && guest !== null ? guest as Record<string, unknown> : {};
-          const name = sanitizeInput(typeof safeGuest.name === 'string' ? safeGuest.name : '');
-          const dietaryNotes = sanitizeInput(typeof safeGuest.dietaryNotes === 'string' ? safeGuest.dietaryNotes : '');
+      .slice(0, MAX_ADDITIONAL_GUESTS)
+      .map((guest) => {
+        const safeGuest = typeof guest === 'object' && guest !== null ? guest as Record<string, unknown> : {};
+        const name = sanitizeInput(typeof safeGuest.name === 'string' ? safeGuest.name : '');
+        const dietaryNotes = sanitizeInput(typeof safeGuest.dietaryNotes === 'string' ? safeGuest.dietaryNotes : '');
+        const id = typeof safeGuest.id === 'string' ? safeGuest.id : undefined;
 
-          return { name, dietaryNotes };
-        })
+        return { id, name, dietaryNotes };
+      })
     : [];
 
-  const attendingSelected = typeof rawAttending === 'boolean'
+  let status: GuestStatus = 'UNSELECTED';
+  if (typeof rawAttending === 'string' && (rawAttending === 'ATTENDING' || rawAttending === 'NOT_ATTENDING' || rawAttending === 'UNSELECTED')) {
+    status = rawAttending as GuestStatus;
+  }
 
+  const dataAsRecord = data as Record<string, unknown>;
   const sanitizedData = {
+    id: typeof dataAsRecord.id === 'string' ? dataAsRecord.id : undefined,
     name: sanitizeInput(typeof data.name === 'string' ? data.name : ''),
-    attending: attendingSelected ? Boolean(rawAttending) : false,
+    attending: status,
     dietaryNotes: sanitizeInput(typeof data.dietaryNotes === 'string' ? data.dietaryNotes : ''),
     message: sanitizeInput(typeof data.message === 'string' ? data.message : ''),
     additionalGuests: sanitizedAdditionalGuests,
     guests: [] as SanitizedGuest[]
   };
+
 
   const nameValidation = validateName(sanitizedData.name);
   if (!nameValidation.isValid) {
@@ -198,7 +217,7 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
 
   const guestErrors: string[] = [];
 
-  if (!attendingSelected) {
+  if (options.requireAttendance && status === 'UNSELECTED') {
     errors.attending = 'Please select if you will attend'
   }
 
@@ -218,7 +237,7 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
     }
   });
 
-  if (!sanitizedData.attending && sanitizedAdditionalGuests.length > 0) {
+  if (status !== 'ATTENDING' && sanitizedAdditionalGuests.length > 0) {
     guestErrors.push('Additional guests can only be added when attending');
     sanitizedData.additionalGuests = [];
   }
@@ -233,17 +252,19 @@ export function validateRSVPData(data: RawRSVPFormData): RSVPValidationResult {
 
   sanitizedData.guests = [
     {
+      id: sanitizedData.id,
       name: sanitizedData.name,
       dietNotes: sanitizedData.dietaryNotes,
       status: sanitizedData.attending
     },
     ...(
-      sanitizedData.attending
+      sanitizedData.attending === 'ATTENDING'
         ? sanitizedData.additionalGuests.map((guest) => ({
-            name: guest.name,
-            dietNotes: guest.dietaryNotes,
-            status: true
-          }))
+          id: guest.id,
+          name: guest.name,
+          dietNotes: guest.dietaryNotes,
+          status: 'ATTENDING' as GuestStatus
+        }))
         : []
     )
   ];
@@ -269,20 +290,20 @@ export function getSecurityHeaders() {
 
 export function createSafeErrorMessage(originalError: unknown): string {
   const error = originalError instanceof Error ? originalError.message : String(originalError);
-  
+
   console.error('RSVP Error:', originalError);
-  
+
   if (error.includes('duplicate') || error.includes('unique')) {
     return 'This invite already exists. Please use your existing link.';
   }
-  
+
   if (error.includes('connection') || error.includes('database')) {
     return 'Unable to process your request at this time. Please try again later.';
   }
-  
+
   if (error.includes('validation') || error.includes('invalid')) {
     return 'Please check your input and try again.';
   }
-  
+
   return 'An unexpected error occurred. Please try again later.';
 }
