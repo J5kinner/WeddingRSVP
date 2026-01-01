@@ -93,7 +93,8 @@ export default function SecureRSVPForm() {
 
         const invite = (await response.json()) as InviteResponse
 
-        // Store all guests for usage in Select dropdowns
+
+
         setAvailableGuests(invite.guests)
 
         const primaryGuest = invite.guests[0]
@@ -325,7 +326,7 @@ export default function SecureRSVPForm() {
       if (response.ok) {
         setSubmitStatus('success')
         setSubmitMessage('Thank you for your RSVP! We saved your response below. You can edit it anytime.')
-        // Update form data to reflect what was saved (including any ID confirmations)
+
         setFormData({
           id: validationResult.sanitizedData.id,
           name: validationResult.sanitizedData.name,
@@ -689,12 +690,6 @@ export default function SecureRSVPForm() {
               'Submit RSVP'
             )}
           </button>
-
-          <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-md)] p-4">
-            <p className="text-sm text-[color:var(--color-botanical-green)]">
-              🔒 Your information is secure. We use industry-standard security practices to protect your data.
-            </p>
-          </div>
         </>
       )}
     </form>

@@ -1,29 +1,26 @@
 import Image from 'next/image'
 import { Suspense } from 'react'
 import SecureRSVPForm from './components/SecureRSVPForm'
+import VideoScrubSection from './components/VideoScrubSection'
 
 export default function Home() {
   return (
     <div className="flex flex-col">
-      {/* SECTION 1: Invite / Welcome (Full Screen) */}
       <section className="min-h-screen flex flex-col justify-center relative section-spacing">
         <div className="content-container">
-          {/* Header Content */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 md:gap-6">
-            {/* Left: Couple's Names */}
             <div className="flex flex-col items-center md:items-start text-center md:text-left order-2 md:order-1">
-              <p className="text-3xl sm:text-4xl md:text-5xl font-serif text-[color:var(--color-text-charcoal)]">
-                Jonah Skinner
+              <p className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
+                Olivia Savage
               </p>
               <p className="text-sm sm:text-base uppercase tracking-wider text-[color:var(--color-text-charcoal)]/60 my-2">
                 and
               </p>
               <p className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
-                Olivia Savage
+                Jonah Skinner
               </p>
             </div>
 
-            {/* Center: Botanical Wreath / Crest with Date */}
             <div className="flex flex-col items-center order-1 md:order-2 space-y-4">
               <div className="relative flex items-center justify-center">
                 <Image
@@ -34,22 +31,18 @@ export default function Home() {
                   priority
                   className="h-auto w-48 sm:w-56 md:w-64"
                 />
-                {/* Couple's Initials Overlay - Script Font */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <span className="font-script text-4xl sm:text-5xl md:text-6xl text-[color:var(--color-botanical-green)]">
                     O & J
                   </span>
                 </div>
               </div>
-              {/* Wedding Date */}
               <h1 className="text-xl sm:text-2xl md:text-3xl font-serif text-[color:var(--color-text-charcoal)] text-center">
                 May 18, 2026
               </h1>
             </div>
 
-            {/* Right: Ceremony, Reception & Venue Details */}
             <div className="flex flex-col items-center md:items-end text-center md:text-right space-y-4 order-3">
-              {/* Ceremony & Reception */}
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-serif text-[color:var(--color-text-charcoal)]">
                   Ceremony & Reception
@@ -59,7 +52,6 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Venue */}
               <div className="space-y-1">
                 <h3 className="text-base sm:text-lg font-serif text-[color:var(--color-text-charcoal)]">
                   Venue
@@ -72,7 +64,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Intro Text */}
           <div className="text-center space-y-4 max-w-2xl mx-auto mt-12 md:mt-24">
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
               We&apos;re Getting Married
@@ -84,7 +75,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll Indicator (Optional, implies there is more) */}
         <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce text-[color:var(--color-text-charcoal)]/40">
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7-7-7" />
@@ -92,7 +82,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* SECTION 2: RSVP Form (Full Screen) */}
+      <VideoScrubSection />
+
       <section id="rsvp" className="min-h-screen flex flex-col bg-white/50 section-spacing border-t border-[color:var(--color-border-subtle)]">
         <div className="content-container">
           <div className="max-w-2xl mx-auto space-y-6">
