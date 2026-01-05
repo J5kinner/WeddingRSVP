@@ -108,6 +108,50 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <section id="registry" className="min-h-screen flex flex-col justify-center section-spacing border-t border-[color:var(--color-border-subtle)]">
+        <div className="content-container">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <div className="text-center space-y-3">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif text-[color:var(--color-text-charcoal)]">
+                Registry
+              </h2>
+              <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]/70">
+                Your presence is our present, but if you&apos;d like to give a gift, we are registered here.
+              </p>
+            </div>
+
+            <div className="w-full max-w-lg mx-auto bg-white rounded-[var(--radius-md)] shadow-sm border border-[color:var(--color-border-light)] p-8 text-center space-y-6">
+              <div className="mx-auto w-16 h-16 bg-[color:var(--color-sage)]/10 rounded-full flex items-center justify-center text-[color:var(--color-botanical-green)] mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                </svg>
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-serif text-[color:var(--color-text-charcoal)]">
+                  MyRegistry.com
+                </h3>
+                <p className="text-sm text-[color:var(--color-text-charcoal)]/70">
+                  View our wishlist and contribution options.
+                </p>
+              </div>
+
+              <a
+                href="https://www.myregistry.com/giftlist/JonahAndOlivia"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center px-8 py-3 bg-[color:var(--color-botanical-green)] text-white font-medium rounded-[var(--radius-sm)] hover:bg-[color:var(--color-botanical-green)]/90 transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
+              >
+                Visit Registry
+                <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
