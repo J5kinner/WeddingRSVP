@@ -38,11 +38,7 @@ export default function VideoScrubSection() {
         }
     }
 
-    useEffect(() => {
-        if (videoRef.current) {
-            setVideoDuration(videoRef.current.duration || 0)
-        }
-    }, [isMobile]) // Re-run when source changes
+
 
     const isSeeking = useRef(false)
     const targetTimeRef = useRef(0)
