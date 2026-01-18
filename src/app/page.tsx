@@ -31,11 +31,6 @@ export default function Home() {
                   priority
                   className="h-auto w-48 sm:w-56 md:w-64"
                 />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-script text-4xl sm:text-5xl md:text-6xl text-[color:var(--color-botanical-green)]">
-                    O & J
-                  </span>
-                </div>
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-serif text-[color:var(--color-text-charcoal)] text-center">
                 May 18, 2026

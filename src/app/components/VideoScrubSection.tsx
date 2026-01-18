@@ -8,6 +8,18 @@ export default function VideoScrubSection() {
     const videoRef = useRef<HTMLVideoElement>(null)
     const [videoDuration, setVideoDuration] = useState(0)
 
+    const [isMobile, setIsMobile] = useState(false)
+
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768)
+        }
+
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
+
     const { scrollYProgress } = useScroll({
         target: containerRef,
         offset: ['start start', 'end end'],
@@ -28,25 +40,42 @@ export default function VideoScrubSection() {
 
     useEffect(() => {
         if (videoRef.current) {
-            if (videoRef.current.readyState >= 1) {
-                setVideoDuration(videoRef.current.duration)
-            }
+            setVideoDuration(videoRef.current.duration || 0)
         }
-    }, [])
+    }, [isMobile]) // Re-run when source changes
+
+    const isSeeking = useRef(false)
+    const targetTimeRef = useRef(0)
 
     useMotionValueEvent(smoothProgress, 'change', (latest) => {
         if (videoRef.current && videoDuration > 0) {
             const targetTime = latest * videoDuration
             if (Number.isFinite(targetTime)) {
-                videoRef.current.currentTime = targetTime
+                targetTimeRef.current = targetTime
             }
         }
     })
 
+    useEffect(() => {
+        let animationFrameId: number
+
+        const tick = () => {
+            if (videoRef.current && !isSeeking.current && Math.abs(videoRef.current.currentTime - targetTimeRef.current) > 0.1) {
+                videoRef.current.currentTime = targetTimeRef.current
+            }
+            animationFrameId = requestAnimationFrame(tick)
+        }
+
+        animationFrameId = requestAnimationFrame(tick)
+
+        return () => cancelAnimationFrame(animationFrameId)
+    }, [])
+
     return (
         <div ref={containerRef} className="relative h-[300vh] w-full bg-black">
 
-            <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center">
+            {/* Added will-change-transform for hardware acceleration hint */}
+            <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center will-change-transform">
 
                 {/* playsInline is CRITICAL for iOS to prevent fullscreen */}
                 <video
@@ -57,8 +86,11 @@ export default function VideoScrubSection() {
                     loop
                     preload="auto"
                     onLoadedMetadata={handleLoadedMetadata}
+                    onSeeking={() => { isSeeking.current = true }}
+                    onSeeked={() => { isSeeking.current = false }}
+                    key={isMobile ? 'mobile' : 'desktop'} // Force re-render on change
                 >
-                    <source src="/Short_clip.mp4" type="video/mp4" />
+                    <source src={isMobile ? "/mob_2.mp4" : "/web_1.mp4"} type="video/mp4" />
                     Your browser does not support the video tag.
                 </video>
 
