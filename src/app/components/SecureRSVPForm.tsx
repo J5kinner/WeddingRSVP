@@ -1,54 +1,52 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, FormEvent } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { VALIDATION_CONFIG, validateRSVPData, sanitizeHTML } from '@/lib/security'
-import type { AdditionalGuest } from '@/lib/security'
-import type { InviteResponse, GuestStatus } from '@/types/rsvp'
+import { sanitizeHTML } from '@/lib/security'
 import { csrfProtector } from '@/lib/csrf'
+import { Check, X, Loader2 } from 'lucide-react'
 
-const MAX_ADDITIONAL_GUESTS = VALIDATION_CONFIG.guestCount.max - 1
+// Define local types matching the new API response structure
+interface Guest {
+  id: string
+  name: string
+  isAttending: boolean | null
+  dietaryRequirements: string | null
+}
 
-type FormField = keyof FormData | 'additionalGuests'
-type FormErrors = Partial<Record<FormField, string>>
-
-interface FormData {
-  id?: string;
-  name: string;
-  attending: GuestStatus;
-  dietaryNotes: string;
-  message: string;
-  additionalGuests: AdditionalGuest[];
-  inviteCode?: string;
+interface InviteData {
+  id: string
+  inviteCode: string
+  message: string | null
+  guests: Guest[]
 }
 
 export default function SecureRSVPForm() {
   const searchParams = useSearchParams()
   const [mounted, setMounted] = useState(false)
-  const [formData, setFormData] = useState<FormData>({
-    name: '',
-    attending: 'UNSELECTED',
-    dietaryNotes: '',
-    message: '',
-    additionalGuests: [],
-    inviteCode: '',
-  })
   const [csrfToken, setCsrfToken] = useState<string>('')
-  const [formErrors, setFormErrors] = useState<FormErrors>({})
+
+  // State for the invite logic
+  const [inviteCode, setInviteCode] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [inviteData, setInviteData] = useState<InviteData | null>(null)
+
+  // Form state once invite is loaded
+  const [localGuests, setLocalGuests] = useState<Guest[]>([])
+  const [userMessage, setUserMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null)
-  const [submitMessage, setSubmitMessage] = useState('')
-  const [isPrefilling, setIsPrefilling] = useState(false)
-  const [prefillError, setPrefillError] = useState('')
-  const [isLocked, setIsLocked] = useState(false)
-  const [availableGuests, setAvailableGuests] = useState<InviteResponse['guests']>([])
-  const [guestSuggestions, setGuestSuggestions] = useState<Record<number, { id: string; name: string; dietaryNotes?: string }[]>>({})
-
 
   useEffect(() => {
     setMounted(true)
-  }, [])
-
+    const urlCode = searchParams.get('inviteCode') || searchParams.get('invitecode')
+    if (urlCode) {
+      setInviteCode(urlCode)
+      // Auto-load if code is present
+      fetchInvite(urlCode)
+    }
+  }, [searchParams])
 
   useEffect(() => {
     const generateToken = async () => {
@@ -57,641 +55,256 @@ export default function SecureRSVPForm() {
         setCsrfToken(token)
       } catch (error) {
         console.error('Failed to generate CSRF token:', error)
-
-        const fallbackToken = Math.random().toString(36).substring(2) + Date.now().toString(36)
-        setCsrfToken(fallbackToken)
       }
     }
-
     generateToken()
   }, [])
 
-  /**
-   * Prefills the form if an invite code is present in the URL.
-   */
-  useEffect(() => {
-    if (!mounted) return
-    const code = searchParams.get('inviteCode') || searchParams.get('invitecode')
+  const fetchInvite = async (code: string) => {
     if (!code) return
-
-    const prefill = async () => {
-      setIsPrefilling(true)
-      setPrefillError('')
-
-      try {
-        const response = await fetch(`/api/rsvp?inviteCode=${encodeURIComponent(code)}`)
-
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}))
-          setPrefillError(
-            typeof data.error === 'string'
-              ? sanitizeHTML(data.error)
-              : 'Invite link not found. Please check your URL.'
-          )
-          return
-        }
-
-        const invite = (await response.json()) as InviteResponse
-
-
-
-        setAvailableGuests(invite.guests)
-
-        const primaryGuest = invite.guests[0]
-
-        const hasExistingResponse = primaryGuest && (primaryGuest.status === 'ATTENDING' || primaryGuest.status === 'NOT_ATTENDING')
-
-        setIsLocked(hasExistingResponse)
-
-
-
-        const otherGuests = invite.guests.slice(1)
-        const activeAdditionalGuests = hasExistingResponse
-          ? otherGuests.filter(g => g.status === 'ATTENDING').map(g => ({
-            id: g.id,
-            name: g.name,
-            dietaryNotes: g.dietNotes || ''
-          }))
-          : []
-
-        setFormData({
-          id: primaryGuest?.id,
-          name: primaryGuest?.name || '',
-          attending: primaryGuest?.status ?? 'UNSELECTED',
-          dietaryNotes: primaryGuest?.dietNotes || '',
-          message: invite.message || '',
-          additionalGuests: activeAdditionalGuests,
-          inviteCode: invite.inviteCode
-        })
-
-        setSubmitStatus(null)
-        setSubmitMessage(
-          hasExistingResponse
-            ? 'We already have your RSVP on file. You can review it below or edit if something changed.'
-            : ''
-        )
-      } catch (error) {
-        console.error('Failed to prefill invite', error)
-        setPrefillError('Unable to load your invite. Please try again.')
-      } finally {
-        setIsPrefilling(false)
-      }
-    }
-
-    prefill()
-  }, [searchParams, mounted])
-
-
-  const validateField = useCallback((fieldName: keyof FormData, value: unknown, currentData: FormData = formData) => {
-    const validationData = { ...currentData, [fieldName]: value }
-    const result = validateRSVPData(validationData)
-
-    const fieldError = result.errors[fieldName]
-    setFormErrors(prev => ({
-      ...prev,
-      [fieldName]: fieldError || ''
-    }))
-
-    return !fieldError
-  }, [formData])
-
-
-  const validateGuestSelection = (name: string): boolean => {
-    if (availableGuests.length === 0) return true
-    return availableGuests.some(g => g.name.toLowerCase() === name.toLowerCase())
-  }
-
-  const handleInputChange = (field: keyof FormData, value: unknown) => {
-    const newData = { ...formData, [field]: value }
-
-    if (field === 'name' && typeof value === 'string') {
-      const match = availableGuests.find(g => g.name.toLowerCase() === value.toLowerCase())
-      if (match) {
-        newData.id = match.id
-      } else {
-        newData.id = undefined
-      }
-    }
-
-    setFormData(newData)
-
-    if (formErrors[field]) {
-      setFormErrors(prev => ({ ...prev, [field]: '' }))
-    }
-
-    if (value && (formErrors[field] || value.toString().length > 2)) {
-      if (field === 'name' && typeof value === 'string' && availableGuests.length > 0) {
-        if (!validateGuestSelection(value)) {
-          setFormErrors(prev => ({ ...prev, name: 'Please select a valid guest from the list.' }))
-          return
-        }
-      }
-      validateField(field, value, newData)
-    }
-  }
-
-  const handleAttendingChange = (value: GuestStatus) => {
-    const updatedData = {
-      ...formData,
-      attending: value,
-      additionalGuests: value === 'ATTENDING' ? formData.additionalGuests : []
-    }
-
-    setFormData(updatedData)
-    setFormErrors(prev => ({
-      ...prev,
-      attending: '',
-      additionalGuests: ''
-    }))
-
-    validateField('attending', value, updatedData)
-  }
-
-  const handleAddGuest = () => {
-    if (formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS) {
-      return
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      additionalGuests: [...prev.additionalGuests, { name: '', dietaryNotes: '' }]
-    }))
-
-    setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
-  }
-
-  const searchGuests = useCallback(async (index: number, query: string) => {
-    if (!query.includes(' ') || query.length < 3 || !formData.inviteCode) {
-      setGuestSuggestions(prev => {
-        const next = { ...prev }
-        delete next[index]
-        return next
-      })
-      return
-    }
+    setIsLoading(true)
+    setError('')
+    setInviteData(null)
 
     try {
-      const res = await fetch(`/api/guests/search?inviteCode=${encodeURIComponent(formData.inviteCode)}&query=${encodeURIComponent(query)}`)
-      if (!res.ok) return
-
+      const res = await fetch(`/api/rsvp?inviteCode=${encodeURIComponent(code)}`)
       const data = await res.json()
 
-      setGuestSuggestions(current => ({
-        ...current,
-        [index]: data.results || []
-      }))
-    } catch (e) {
-      console.error('Search failed', e)
-    }
-  }, [formData.inviteCode])
-
-  const handleGuestChange = (index: number, field: keyof AdditionalGuest, value: string) => {
-    const updatedGuests = [...formData.additionalGuests]
-    const guest = { ...updatedGuests[index], [field]: value }
-
-    if (field === 'name') {
-      if (guest.id) {
-        guest.id = undefined
+      if (res.ok) {
+        setInviteData(data)
+        setLocalGuests(data.guests)
+        setUserMessage(data.message || '')
+      } else {
+        setError(data.error || 'Could not find invite.')
       }
-
-      searchGuests(index, value)
-    }
-
-    updatedGuests[index] = guest
-
-    setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
-
-    if (formErrors.additionalGuests) {
-      setFormErrors(prev => ({ ...prev, additionalGuests: '' }))
-    }
-
-    if (value && (formErrors.additionalGuests || value.length > 1)) {
-      validateField('additionalGuests', updatedGuests, { ...formData, additionalGuests: updatedGuests })
+    } catch (err) {
+      console.error(err)
+      setError('Failed to load invite. Please check your connection.')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleSuggestionSelect = (index: number, suggestion: { id: string; name: string; dietaryNotes?: string }) => {
-    const updatedGuests = [...formData.additionalGuests]
-    updatedGuests[index] = {
-      ...updatedGuests[index],
-      name: suggestion.name,
-      id: suggestion.id,
-      dietaryNotes: suggestion.dietaryNotes || updatedGuests[index].dietaryNotes
-    }
-    setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
-
-    setGuestSuggestions(prev => {
-      const next = { ...prev }
-      delete next[index]
-      return next
-    })
-  }
-
-  const handleRemoveGuest = (index: number) => {
-    const updatedGuests = formData.additionalGuests.filter((_, guestIndex) => guestIndex !== index)
-    setFormData(prev => ({ ...prev, additionalGuests: updatedGuests }))
-    validateField('additionalGuests', updatedGuests, { ...formData, additionalGuests: updatedGuests })
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleManualLookup = (e: FormEvent) => {
     e.preventDefault()
+    fetchInvite(inviteCode)
+  }
 
-    const validationResult = validateRSVPData(formData)
+  const handleAttendanceChange = (guestId: string, isAttending: boolean) => {
+    setLocalGuests(prev => prev.map(g => {
+      if (g.id === guestId) {
+        return { ...g, isAttending }
+      }
+      return g
+    }))
+  }
 
-    if (!validationResult.isValid) {
-      setFormErrors(validationResult.errors)
-      return
-    }
+  const handleDietaryChange = (guestId: string, value: string) => {
+    setLocalGuests(prev => prev.map(g => {
+      if (g.id === guestId) {
+        return { ...g, dietaryRequirements: value }
+      }
+      return g
+    }))
+  }
 
+  const handleSubmitRSVP = async (e: FormEvent) => {
+    e.preventDefault()
     setIsSubmitting(true)
     setSubmitStatus(null)
-    setSubmitMessage('')
 
     try {
-      const response = await fetch('/api/rsvp', {
+      const payload = {
+        inviteCode: inviteData?.inviteCode,
+        guests: localGuests.map(g => ({
+          id: g.id,
+          isAttending: g.isAttending || false, // If null/unselected, treat as false? Or force selection? 
+          // Requirement: "if a user submits a list who has some guests unselected then they are not coming"
+          // So null -> false.
+          dietaryRequirements: g.dietaryRequirements
+        })),
+        message: userMessage,
+        _csrf: csrfToken
+      }
+
+      const res = await fetch('/api/rsvp', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-csrf-token': csrfToken,
+          'x-csrf-token': csrfToken
         },
-        body: JSON.stringify({
-          ...validationResult.sanitizedData,
-          _csrf: csrfToken,
-          inviteCode: formData.inviteCode
-        }),
+        body: JSON.stringify(payload)
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
+      if (res.ok) {
         setSubmitStatus('success')
-        setSubmitMessage('Thank you for your RSVP! We saved your response below. You can edit it anytime.')
-
-        setFormData({
-          id: validationResult.sanitizedData.id,
-          name: validationResult.sanitizedData.name,
-          attending: validationResult.sanitizedData.attending,
-          dietaryNotes: validationResult.sanitizedData.dietaryNotes,
-          message: validationResult.sanitizedData.message,
-          additionalGuests: validationResult.sanitizedData.additionalGuests,
-          inviteCode: formData.inviteCode
-        })
-        setIsLocked(true)
       } else {
         setSubmitStatus('error')
-        setSubmitMessage(sanitizeHTML(data.error || 'Something went wrong. Please try again.'))
       }
-    } catch (error) {
-      console.error('Fetch error:', error)
+    } catch (err) {
+      console.error(err)
       setSubmitStatus('error')
-      setSubmitMessage('Failed to submit RSVP. Please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const attendingOptions: { value: GuestStatus; label: string; description: string }[] = [
-    { value: 'ATTENDING', label: 'Yes, I\'ll be there!', description: 'We can\'t wait to celebrate with you!' },
-    { value: 'NOT_ATTENDING', label: 'Sorry, can\'t make it', description: 'We understand, but we\'ll miss you!' }
-  ]
+  if (!mounted) return null
 
-  const totalGuests = formData.attending === 'ATTENDING' ? formData.additionalGuests.length + 1 : 0
-  const hasReachedGuestLimit = formData.additionalGuests.length >= MAX_ADDITIONAL_GUESTS
-
-  const dietaryLength = formData.dietaryNotes.trim().length
-  const attendanceLabel =
-    formData.attending === 'ATTENDING' ? 'Attending' : formData.attending === 'NOT_ATTENDING' ? 'Not attending' : 'Not selected'
-
-  const handleUnlock = () => {
-    setIsLocked(false)
-    setSubmitStatus(null)
-    setSubmitMessage('You can update your RSVP below.')
+  // 1. Initial State: Enter Code
+  if (!inviteData) {
+    return (
+      <div className="w-full max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg border border-[#E5E9EB]">
+        <h2 className="text-2xl font-serif text-[#1F2937] mb-4 text-center">Find Your Invite</h2>
+        <form onSubmit={handleManualLookup} className="space-y-4">
+          <div>
+            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
+            <input
+              id="code"
+              type="text"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6B8E23] focus:border-transparent outline-none transition-all"
+              placeholder="Enter code from your invite"
+              required
+            />
+          </div>
+          {error && <p className="text-red-600 text-sm">{sanitizeHTML(error)}</p>}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[#6B8E23] hover:bg-[#556B2F] text-white font-medium py-3 rounded-lg transition-colors flex items-center justify-center"
+          >
+            {isLoading ? <Loader2 className="animate-spin w-5 h-5" /> : 'Find Invite'}
+          </button>
+        </form>
+      </div>
+    )
   }
 
-
-
+  // 2. RSVP Form
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {isPrefilling && (
-        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
-          Loading your invite details...
-        </div>
-      )}
+    <div className="w-full max-w-2xl mx-auto p-6 lg:p-8 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-[#E5E9EB]">
+      <div className="mb-8 text-center">
+        <h2 className="text-3xl font-serif text-[#1F2937] mb-2">RSVP</h2>
+        <p className="text-gray-600">Please let us know if you can make it.</p>
+      </div>
 
-      {prefillError && (
-        <div className="bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)] text-sm rounded-[var(--radius-md)] p-3">
-          {sanitizeHTML(prefillError)}
-        </div>
-      )}
-
-
-      {availableGuests.length > 0 && (
-        <datalist id="guest-options">
-          {availableGuests.map((guest) => (
-            <option key={guest.id} value={guest.name} />
-          ))}
-        </datalist>
-      )}
-
-      {formData.inviteCode && !isPrefilling && !prefillError && (
-        <div className="bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)] text-sm rounded-[var(--radius-md)] p-3">
-          Invite link detected. We prefilled details for {sanitizeHTML(formData.name || 'your invite')}.
-        </div>
-      )}
-
-      {submitMessage && (
-        <div
-          className={`p-4 rounded-[var(--radius-md)] ${submitStatus === 'success'
-            ? 'bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 text-[color:var(--color-botanical-green)]'
-            : 'bg-[color:var(--color-rose)]/10 border border-[color:var(--color-rose)]/30 text-[color:var(--color-text-charcoal)]'
-            }`}
-        >
-          {sanitizeHTML(submitMessage)}
-        </div>
-      )}
-
-      {isLocked ? (
-        <div className="space-y-4 bg-white border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <p className="text-lg font-serif text-[color:var(--color-text-charcoal)]">RSVP on file</p>
-              <p className="text-sm text-[color:var(--color-text-charcoal)]/70">
-                Thank you, {sanitizeHTML(formData.name || 'guest')}. We&apos;ve saved your response.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleUnlock}
-              className="text-sm font-medium text-[color:var(--color-botanical-green)] hover:text-[color:var(--color-botanical-green)]/80 transition-colors"
-            >
-              Edit my RSVP
-            </button>
+      {submitStatus === 'success' ? (
+        <div className="text-center py-10 space-y-4">
+          <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8" />
           </div>
-
-          <div className="border border-[color:var(--color-border-subtle)] rounded-[var(--radius-sm)] p-3 bg-[color:var(--color-bg-paper)] space-y-2 text-sm text-[color:var(--color-text-charcoal)]/80">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Status</span>
-              <span className="px-2 py-1 rounded-[var(--radius-sm)] bg-[color:var(--color-sage)]/20 text-[color:var(--color-botanical-green)]">{attendanceLabel}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Total guests</span>
-              <span className="text-[color:var(--color-text-charcoal)]">{totalGuests}</span>
-            </div>
-            {formData.additionalGuests.length > 0 && (
-              <div>
-                <p className="font-medium">Additional guests</p>
-                <ul className="mt-1 space-y-1">
-                  {formData.additionalGuests.map((guest, idx) => (
-                    <li key={`summary-guest-${idx}`} className="flex items-center justify-between">
-                      <span>{sanitizeHTML(guest.name || `Guest ${idx + 1}`)}</span>
-                      {guest.dietaryNotes && (
-                        <span className="text-xs text-[color:var(--color-text-charcoal)]/60">Diet: {sanitizeHTML(guest.dietaryNotes)}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {formData.dietaryNotes && (
-              <div>
-                <p className="font-medium">Dietary notes</p>
-                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.dietaryNotes)}</p>
-              </div>
-            )}
-            {formData.message && (
-              <div>
-                <p className="font-medium">Message</p>
-                <p className="text-[color:var(--color-text-charcoal)]/70">{sanitizeHTML(formData.message)}</p>
-              </div>
-            )}
-          </div>
+          <h3 className="text-2xl font-serif text-[#1F2937]">Thank You!</h3>
+          <p className="text-gray-600">Your RSVP has been sent. We can&apos;t wait to celebrate with you!</p>
+          <button
+            onClick={() => setSubmitStatus(null)}
+            className="text-[#6B8E23] font-medium hover:underline mt-4"
+          >
+            Edit Response
+          </button>
         </div>
       ) : (
-        <>
-          <div>
-            <label htmlFor="name" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-              Name *
-            </label>
-            <input
-              type="text"
-              id="name"
-              required
-              value={formData.name}
-              readOnly
-              className="input-botanical bg-[color:var(--color-bg-paper)] opacity-70 cursor-not-allowed"
-              placeholder="Guest Name"
-            />
-            {formErrors.name && (
-              <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.name)}</p>
-            )}
-            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-              This invite is exclusively for <span className="font-medium">{formData.name}</span>.
-            </p>
-          </div>
+        <form onSubmit={handleSubmitRSVP} className="space-y-8">
 
-          <div>
-            <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-3">
-              Will you be attending? *
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {attendingOptions.map((option) => (
-                <label
-                  key={String(option.value)}
-                  className={`flex items-start space-x-3 p-4 border rounded-[var(--radius-md)] cursor-pointer transition-all ${formData.attending === option.value
-                    ? 'border-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10'
-                    : 'border-[color:var(--color-border-light)] hover:bg-[color:var(--color-bg-paper)]'
-                    }`}
-                >
-                  <input
-                    type="radio"
-                    name="attending"
-                    checked={formData.attending === option.value}
-                    onChange={() => handleAttendingChange(option.value)}
-                    required={formData.attending === 'UNSELECTED'}
-                    className="mt-0.5 text-[color:var(--color-botanical-green)] focus:ring-[color:var(--color-botanical-green)]"
-                  />
-                  <div className="flex-1">
-                    <span className="font-medium text-[color:var(--color-text-charcoal)]">{option.label}</span>
-                    <p className="text-sm text-[color:var(--color-text-charcoal)]/70 mt-1">{option.description}</p>
-                  </div>
-                </label>
-              ))}
-            </div>
-            {formErrors.attending && (
-              <p className="text-[color:var(--color-rose)] text-sm mt-2">{sanitizeHTML(formErrors.attending)}</p>
-            )}
-          </div>
-
-          {formData.attending === 'ATTENDING' && (
-            <>
-              <div className="space-y-3">
-                <div className="flex items-start justify-between flex-wrap gap-2">
+          {/* Guest List */}
+          <div className="space-y-4">
+            {localGuests.map((guest) => (
+              <div key={guest.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                <div className="flex items-start justify-between mb-3">
                   <div>
-                    <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)]">
-                      Add guests
+                    <h3 className="text-lg font-medium text-gray-900">{sanitizeHTML(guest.name)}</h3>
+                  </div>
+                  <div className="flex gap-2">
+                    <label className={`
+                                    cursor-pointer px-3 py-2 rounded-md border text-sm font-medium transition-all flex items-center gap-2
+                                    ${guest.isAttending === true
+                        ? 'bg-[#6B8E23] text-white border-[#6B8E23]'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
+                                `}>
+                      <input
+                        type="radio"
+                        name={`attending-${guest.id}`}
+                        className="sr-only"
+                        checked={guest.isAttending === true}
+                        onChange={() => handleAttendanceChange(guest.id, true)}
+                      />
+                      <Check className="w-4 h-4" />
+                      Joyfully Accepts
                     </label>
-                    <p className="text-xs text-[color:var(--color-text-charcoal)]/60 mt-1">
-                      Share names and dietary needs for anyone attending with you.
-                    </p>
+                    <label className={`
+                                    cursor-pointer px-3 py-2 rounded-md border text-sm font-medium transition-all flex items-center gap-2
+                                    ${guest.isAttending === false
+                        ? 'bg-gray-800 text-white border-gray-800'
+                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
+                                `}>
+                      <input
+                        type="radio"
+                        name={`attending-${guest.id}`}
+                        className="sr-only"
+                        checked={guest.isAttending === false}
+                        onChange={() => handleAttendanceChange(guest.id, false)}
+                      />
+                      <X className="w-4 h-4" />
+                      Regretfully Declines
+                    </label>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleAddGuest}
-                    disabled={hasReachedGuestLimit}
-                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-[color:var(--color-botanical-green)] bg-[color:var(--color-sage)]/10 border border-[color:var(--color-sage)]/30 rounded-[var(--radius-sm)] hover:bg-[color:var(--color-sage)]/20 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                  >
-                    <span className="text-lg mr-2">+</span>
-                    Add guest
-                  </button>
                 </div>
-                {formErrors.additionalGuests && (
-                  <p className="text-[color:var(--color-rose)] text-sm">{sanitizeHTML(formErrors.additionalGuests)}</p>
-                )}
-                {formData.additionalGuests.length === 0 && (
-                  <div className="border border-dashed border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 text-sm text-[color:var(--color-text-charcoal)]/60 bg-[color:var(--color-bg-paper)]">
-                    No additional guests yet. Click &quot;Add guest&quot; to include family or friends.
+
+                {/* Dietary Requirements - Only show if attending */}
+                {guest.isAttending === true && (
+                  <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Dietary Requirements
+                    </label>
+                    <select
+                      value={guest.dietaryRequirements || ''}
+                      onChange={(e) => handleDietaryChange(guest.id, e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white focus:ring-2 focus:ring-[#6B8E23] focus:border-transparent outline-none text-sm"
+                    >
+                      <option value="">None / Standard Meal</option>
+                      <option value="Vegetarian">Vegetarian</option>
+                      <option value="Vegan">Vegan</option>
+                      <option value="Gluten Free">Gluten Free</option>
+                      <option value="Dairy Free">Dairy Free</option>
+                      <option value="Nut Allergy">Nut Allergy</option>
+                      <option value="Other">Other (Please specify in message)</option>
+                    </select>
                   </div>
                 )}
-                <div className="space-y-3">
-                  {formData.additionalGuests.map((guest, index) => (
-                    <div key={`guest-${index}`} className="border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] p-4 bg-white space-y-3 relative">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="text-sm font-semibold text-[color:var(--color-text-charcoal)]">Guest {index + 1}</p>
-                          <p className="text-xs text-[color:var(--color-text-charcoal)]/60">Provide their name and dietary needs.</p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGuest(index)}
-                          className="text-sm text-[color:var(--color-rose)] hover:text-[color:var(--color-rose)]/80 transition-colors"
-                        >
-                          Remove
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <div className="relative">
-                          <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-                            Guest name *
-                          </label>
-                          <input
-                            type="text"
-                            value={guest.name}
-                            onChange={(e) => handleGuestChange(index, 'name', e.target.value)}
-                            maxLength={100}
-                            className="input-botanical"
-                            placeholder="Guest name"
-                            required
-                            autoComplete="off"
-                          />
-                          {guestSuggestions[index] && guestSuggestions[index].length > 0 && (
-                            <ul className="absolute z-10 w-full bg-white border border-[color:var(--color-border-light)] rounded-b-[var(--radius-md)] shadow-lg max-h-48 overflow-y-auto mt-1">
-                              {guestSuggestions[index].map((suggestion) => (
-                                <li
-                                  key={suggestion.id}
-                                  onClick={() => handleSuggestionSelect(index, suggestion)}
-                                  className="px-4 py-2 hover:bg-[color:var(--color-sage)]/10 cursor-pointer text-sm text-[color:var(--color-text-charcoal)]"
-                                >
-                                  <div className="font-medium">{suggestion.name}</div>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-                            Dietary needs or notes
-                          </label>
-                          <input
-                            type="text"
-                            value={guest.dietaryNotes}
-                            onChange={(e) => handleGuestChange(index, 'dietaryNotes', e.target.value)}
-                            maxLength={120}
-                            className="input-botanical"
-                            placeholder="Vegetarian, gluten-free, allergies, etc."
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="text-xs text-[color:var(--color-text-charcoal)]/70">
-                  Total guests (including you): <span className="font-semibold text-[color:var(--color-text-charcoal)]">{totalGuests}</span>{' '}
-                  {hasReachedGuestLimit ? '(guest limit reached)' : `(max ${MAX_ADDITIONAL_GUESTS + 1})`}
-                </p>
               </div>
+            ))}
+          </div>
 
-              <div>
-                <label htmlFor="dietaryNotes" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-                  Dietary Restrictions or Special Requests <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(optional, 500 character limit)</span>
-                </label>
-                <textarea
-                  id="dietaryNotes"
-                  value={formData.dietaryNotes}
-                  onChange={(e) => handleInputChange('dietaryNotes', e.target.value)}
-                  maxLength={500}
-                  rows={3}
-                  className={`textarea-botanical ${formErrors.dietaryNotes
-                    ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]'
-                    : ''
-                    }`}
-                  placeholder="Leave blank if no restrictions. Include notes for you or added guests — vegetarian, gluten-free, allergies, etc."
-                />
-                {formErrors.dietaryNotes && (
-                  <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.dietaryNotes)}</p>
-                )}
-                <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-                  This note is for you; each added guest has their own dietary details above.
-                </p>
-                <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-                  {dietaryLength}/500 characters for your notes
-                </p>
-              </div>
-            </>
-          )}
-
+          {/* Message */}
           <div>
-            <label htmlFor="message" className="block text-sm font-medium text-[color:var(--color-text-charcoal)] mb-1">
-              Message <span className="text-xs text-[color:var(--color-text-charcoal)]/60">(300 character limit, optional)</span>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Message for the Happy Couple (Optional)
             </label>
             <textarea
-              id="message"
-              value={formData.message}
-              onChange={(e) => handleInputChange('message', e.target.value)}
-              maxLength={300}
+              value={userMessage}
+              onChange={(e) => setUserMessage(e.target.value)}
               rows={3}
-              className={`textarea-botanical ${formErrors.message
-                ? 'border-[color:var(--color-rose)] focus:border-[color:var(--color-rose)]'
-                : ''
-                }`}
-              placeholder="We're so excited to celebrate with you!"
+              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-[#6B8E23] focus:border-transparent outline-none transition-all"
+              placeholder="Leave a note..."
             />
-            {formErrors.message && (
-              <p className="text-[color:var(--color-rose)] text-sm mt-1">{sanitizeHTML(formErrors.message)}</p>
-            )}
-            <p className="text-[color:var(--color-text-charcoal)]/60 text-xs mt-1">
-              {formData.message.length}/300 characters
-            </p>
           </div>
+
+          {submitStatus === 'error' && (
+            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+              Something went wrong. Please try again.
+            </div>
+          )}
 
           <button
             type="submit"
-            disabled={isSubmitting || isPrefilling}
-            className="btn-botanical w-full disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmitting}
+            className="w-full bg-[#6B8E23] hover:bg-[#556B2F] text-white font-bold py-4 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Submitting...
-              </span>
-            ) : (
-              'Submit RSVP'
-            )}
+            {isSubmitting ? 'Sending RSVP...' : 'Submit RSVP'}
           </button>
-        </>
+        </form>
       )}
-    </form>
+    </div>
   )
 }

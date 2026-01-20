@@ -2,7 +2,7 @@ import RSVPList from '@/app/components/RSVPList'
 import { neon } from '@neondatabase/serverless'
 import AdminGuestForm from './AdminGuestForm'
 import AdminCsvImport from './AdminCsvImport'
-import type { InviteResponse, GuestStatus } from '@/types/rsvp'
+import type { InviteResponse } from '@/types/rsvp'
 import { resetInvite, deleteInvite } from './actions'
 
 export const dynamic = 'force-dynamic'
@@ -18,13 +18,13 @@ const sql = neon(databaseUrl)
 type RawInviteRow = {
   inviteId: string
   inviteCode: string
-  message: string | null
+  userMessage: string | null
   inviteCreatedAt: string | Date
   inviteUpdatedAt: string | Date
   guestId: string | null
   guestName: string | null
-  guestStatus: GuestStatus | null
-  guestDietNotes: string | null
+  guestIsAttending: boolean | null
+  guestDietaryRequirements: string | null
   guestCreatedAt: string | Date | null
   guestUpdatedAt: string | Date | null
 }
@@ -37,7 +37,7 @@ function mapInviteRows(rows: RawInviteRow[]): InviteResponse[] {
       inviteMap.set(row.inviteId, {
         id: row.inviteId,
         inviteCode: row.inviteCode,
-        message: row.message,
+        message: row.userMessage,
         createdAt:
           row.inviteCreatedAt instanceof Date
             ? row.inviteCreatedAt.toISOString()
@@ -55,8 +55,8 @@ function mapInviteRows(rows: RawInviteRow[]): InviteResponse[] {
       invite.guests.push({
         id: row.guestId,
         name: row.guestName || '',
-        status: row.guestStatus as GuestStatus || 'UNSELECTED',
-        dietNotes: row.guestDietNotes,
+        isAttending: row.guestIsAttending,
+        dietaryRequirements: row.guestDietaryRequirements,
         createdAt:
           row.guestCreatedAt instanceof Date
             ? row.guestCreatedAt.toISOString()
@@ -77,13 +77,13 @@ async function getRSVPs(): Promise<InviteResponse[]> {
     SELECT 
       i.id as "inviteId",
       i."inviteCode",
-      i.message,
+      i."userMessage",
       i."createdAt" as "inviteCreatedAt",
       i."updatedAt" as "inviteUpdatedAt",
       g.id as "guestId",
       g.name as "guestName",
-      g.status as "guestStatus",
-      g."dietNotes" as "guestDietNotes",
+      g."isAttending" as "guestIsAttending",
+      g."dietaryRequirements" as "guestDietaryRequirements",
       g."createdAt" as "guestCreatedAt",
       g."updatedAt" as "guestUpdatedAt"
     FROM invites i
@@ -118,9 +118,9 @@ export default async function AdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AdminCsvImport />
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Add Single Guest</h2>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Create Invite</h2>
             <p className="text-sm text-gray-600 mb-4">
-              Create a new invite and guest record directly in the database.
+              Create a new invite and add guests. The invite code will be generated automatically.
             </p>
             <AdminGuestForm />
           </div>

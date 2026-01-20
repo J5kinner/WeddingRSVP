@@ -1,10 +1,10 @@
-export type GuestStatus = 'ATTENDING' | 'NOT_ATTENDING' | 'UNSELECTED';
+// GuestStatus enum is removed as we switched to boolean isAttending
 
 export interface GuestResponse {
   id: string;
   name: string;
-  status: GuestStatus;
-  dietNotes: string | null;
+  isAttending: boolean | null;
+  dietaryRequirements: string | null;
   createdAt: string;
   updatedAt: string;
 }

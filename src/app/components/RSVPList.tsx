@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 import { sanitizeHTML } from '@/lib/security'
 import type { InviteResponse } from '@/types/rsvp'
 
@@ -28,6 +30,18 @@ interface RSVPListProps {
 }
 
 export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPListProps) {
+  const [origin, setOrigin] = useState('')
+
+  useEffect(() => {
+    setOrigin(window.location.origin)
+  }, [])
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+      .then(() => alert('Link copied to clipboard!'))
+      .catch(err => console.error('Failed to copy:', err))
+  }
+
   if (!rsvps || rsvps.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -38,11 +52,11 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
 
   const totalGuests = rsvps.reduce((sum, invite) => sum + invite.guests.length, 0)
   const attendingGuests = rsvps.reduce(
-    (sum, invite) => sum + invite.guests.filter((guest) => guest.status === 'ATTENDING').length,
+    (sum, invite) => sum + invite.guests.filter((guest) => guest.isAttending === true).length,
     0
   )
   const declinedGuests = rsvps.reduce(
-    (sum, invite) => sum + invite.guests.filter((guest) => guest.status === 'NOT_ATTENDING').length,
+    (sum, invite) => sum + invite.guests.filter((guest) => guest.isAttending === false).length,
     0
   )
   const pendingGuests = totalGuests - attendingGuests - declinedGuests
@@ -75,18 +89,21 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
         <h3 className="text-lg font-semibold text-gray-900">All RSVPs</h3>
         <div className="space-y-3">
           {rsvps.map((invite) => {
-            const attendingCount = invite.guests.filter((guest) => guest.status === 'ATTENDING').length
+            const attendingCount = invite.guests.filter((guest) => guest.isAttending === true).length
             const totalCount = invite.guests.length
-            const isFullyDeclined = invite.guests.every(g => g.status === 'NOT_ATTENDING')
-            const isUnanswered = invite.guests.every(g => g.status === 'UNSELECTED')
-            const primaryGuest = invite.guests[0]?.name || 'Guest'
+            const isFullyDeclined = invite.guests.every(g => g.isAttending === false)
+            const isUnanswered = invite.guests.every(g => g.isAttending === null)
+            const guestNames = invite.guests.map(g => g.name).join(', ')
 
             let statusLabel = 'Mixed/Pending'
             let statusColor = 'bg-yellow-100 text-yellow-800 border-yellow-200'
 
-            if (attendingCount > 0) {
-              statusLabel = 'Attending'
+            if (attendingCount > 0 && attendingCount === totalCount) {
+              statusLabel = 'All Attending'
               statusColor = 'bg-green-100 text-green-800 border-green-200'
+            } else if (attendingCount > 0) {
+              statusLabel = 'Some Attending'
+              statusColor = 'bg-green-50 text-green-800 border-green-200'
             } else if (isFullyDeclined) {
               statusLabel = 'Not Attending'
               statusColor = 'bg-gray-100 text-gray-800 border-gray-200'
@@ -94,6 +111,8 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
               statusLabel = 'No Response'
               statusColor = 'bg-blue-50 text-blue-800 border-blue-200'
             }
+
+            const inviteLink = origin ? `${origin}/?inviteCode=${invite.inviteCode}#rsvp` : ''
 
             return (
               <div
@@ -106,14 +125,36 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">{sanitizeHTML(primaryGuest)}</h4>
+                      <h4 className="font-semibold text-gray-900">
+                        {sanitizeHTML(guestNames)}
+                      </h4>
+
                       <span
                         className={`text-xs px-2 py-1 rounded ${statusColor}`}
                       >
                         {statusLabel}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-500">Invite code: {sanitizeHTML(invite.inviteCode)}</p>
+
+                    <div className="flex items-center gap-2 mt-1">
+                      <code className="text-xs bg-gray-100 px-2 py-1 rounded border border-gray-200">
+                        {sanitizeHTML(invite.inviteCode)}
+                      </code>
+                      {inviteLink && (
+                        <button
+                          onClick={() => copyToClipboard(inviteLink)}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:underline"
+                          title="Copy Link to Clipboard"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                            <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                          </svg>
+                          Copy Link
+                        </button>
+                      )}
+                    </div>
+
                     {invite.message && (
                       <p className="text-sm text-gray-700 italic mt-1">
                         &quot;{sanitizeHTML(invite.message)}&quot;
@@ -159,23 +200,23 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                     >
                       <div>
                         <p className="font-medium text-gray-900">{sanitizeHTML(guest.name)}</p>
-                        {guest.dietNotes && (
+                        {guest.dietaryRequirements && (
                           <p className="text-sm text-gray-700">
-                            <span className="font-medium">Diet:</span> {sanitizeHTML(guest.dietNotes)}
+                            <span className="font-medium">Diet:</span> {sanitizeHTML(guest.dietaryRequirements)}
                           </p>
                         )}
                       </div>
                       <span
-                        className={`text-xs px-2 py-1 rounded ${guest.status === 'ATTENDING'
+                        className={`text-xs px-2 py-1 rounded ${guest.isAttending === true
                           ? 'bg-green-100 text-green-800'
-                          : guest.status === 'NOT_ATTENDING'
+                          : guest.isAttending === false
                             ? 'bg-gray-100 text-gray-800'
                             : 'bg-yellow-100 text-yellow-800'
                           }`}
                       >
-                        {guest.status === 'ATTENDING'
+                        {guest.isAttending === true
                           ? 'Attending'
-                          : guest.status === 'NOT_ATTENDING'
+                          : guest.isAttending === false
                             ? 'Not Attending'
                             : 'Pending'}
                       </span>
