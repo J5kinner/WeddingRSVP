@@ -6,7 +6,6 @@ import { sanitizeHTML } from '@/lib/security'
 import { csrfProtector } from '@/lib/csrf'
 import { Check, X, Loader2 } from 'lucide-react'
 
-// Define local types matching the new API response structure
 interface Guest {
   id: string
   name: string

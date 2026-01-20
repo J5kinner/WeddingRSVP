@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
   const inviteCode = searchParams.get('inviteCode')?.trim()
   const clientId = getClientId(request)
 
-  // Rate Limiting
   const rateLimitResult = rateLimitDisabled
     ? { allowed: true, remaining: 100, resetTime: Date.now(), retryAfter: 0 }
     : checkRateLimit(clientId, RATE_LIMIT_CONFIGS.rsvpRead)

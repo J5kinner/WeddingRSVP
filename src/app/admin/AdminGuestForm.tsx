@@ -73,19 +73,6 @@ export default function AdminGuestForm() {
     setCreatedInviteCode(null)
 
     try {
-      // We are hitting the same API but we need to structure it as a "new invite" request.
-      // Since our POST /api/rsvp currently handles "updating" or "creating" based on context,
-      // but primarily it was designed for the USER RSVP flow.
-      // IMPORTANT: The Admin flow needs a way to create an invite *without* full RSVP details.
-      // The current POST /api/rsvp requires valid RSVP data structure.
-      // We might need to adjust the API or call it differently.
-      // Actually, looking at the previous API code I wrote:
-      // It handles "inviteCodeFromBody" check. If missing, it creates new.
-      // And it inserts guests.
-      // So we can send: { guests: [{ name: "..." }], inviteCode: "" }
-
-
-
       const response = await fetch('/api/admin/invites', {
         method: 'POST',
         headers: {
