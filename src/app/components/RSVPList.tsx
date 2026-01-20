@@ -30,11 +30,14 @@ interface RSVPListProps {
 }
 
 export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPListProps) {
-  const [origin, setOrigin] = useState('')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    setOrigin(window.location.origin)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true)
   }, [])
+
+  const origin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)

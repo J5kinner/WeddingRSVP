@@ -47,8 +47,6 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch Invite + Guests
-    // Note: We use a JOIN to get everything in one query usually, but simple queries work too.
-    // Neon/Postgres typical query:
     const inviteRows = await sql`
       SELECT id, "inviteCode", "userMessage"
       FROM invites 
@@ -118,7 +116,6 @@ export async function POST(request: NextRequest) {
     const csrfToken = getCSRFTokenFromRequest(request)
 
     // In a real app verify CSRF token matches session/cookie. 
-    // Here we just check presence as per existing pattern or strict verification if implemented.
     if (!csrfToken) {
       return NextResponse.json({ error: 'CSRF token missing' }, { status: 403, headers: getSecurityHeaders() })
     }
@@ -144,10 +141,8 @@ export async function POST(request: NextRequest) {
     `
 
     // 3. Update Guests
-    // Security: Only update guests that actually belong to this invite.
-    // We fetch valid guest IDs for this invite first.
-    const validGuestRows = await sql`SELECT id FROM guests WHERE "inviteId" = ${inviteId}`
-    const validGuestIds = new Set(validGuestRows.map((r: any) => r.id))
+    const validGuestRows = (await sql`SELECT id FROM guests WHERE "inviteId" = ${inviteId}`) as { id: string }[]
+    const validGuestIds = new Set(validGuestRows.map((r) => r.id))
 
     for (const guest of guests) {
       if (validGuestIds.has(guest.id)) {
@@ -165,9 +160,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Handle Unselected Guests
-    // Any guest ID remaining in validGuestIds was not in the submission.
-    // We should mark them as not attending (or leave them? Requirements said "unselected then they are not coming").
-    // Let's mark them as isAttending = false if they were not explicitly submitted.
     for (const missingId of validGuestIds) {
       await sql`
         UPDATE guests

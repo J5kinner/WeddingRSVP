@@ -84,39 +84,7 @@ export default function AdminGuestForm() {
       // And it inserts guests.
       // So we can send: { guests: [{ name: "..." }], inviteCode: "" }
 
-      const payload = {
-        inviteCode: '', // Empty trigger creation
-        guests: validNames.map(name => ({
-          name,
-          status: 'UNSELECTED', // or null/false based on new schema? 
-          // New schema has `isAttending` boolean. `null` is default.
-          // API expects GuestUpdate[]: { id?, isAttending, dietaryRequirements }
-          // Wait, the API I wrote expects `guests: GuestUpdate[]`.
-          // `GuestUpdate` has `id`.
-          // If I want to CREATE, the API I wrote in step 52 is heavily biased towards UPDATE (it expects `id` for guests?).
-          // Let's re-read the API code I wrote.
 
-          // API `POST`: 
-          // "1. Verify Invite Exists" -> if inviteCode provided.
-          // IF inviteCode not provided (which is weird for RSVP but okay for creation?):
-          // The API returns "Invite code required" at the top of try block!
-          // lines 127-129: if (!inviteCode) return error.
-
-          // Ah, I broke the "Create Invite" flow in the API refactor because I optimized for "User RSVPing".
-          // I need to fix the API to allow Admin to create invites OR create a separate Admin API.
-          // Given the prompt "fix the APIs and UI on both the user form and admin page", I should probably fix the API.
-          // But I already marked API as done? No, I marked "RSVP submission endpoint" as done. "Update Admin Invite management endpoints" is pending.
-          // So I should probably add an Admin API route or tweak api/rsvp.
-          // Creating a dedicated admin route is cleaner. `/api/admin/invites`
-
-        })),
-        message: '',
-        _csrf: csrfToken
-      }
-
-      // Switching strategy: I will create a dedicated admin component/action or use a new API route.
-      // Since I am in the middle of editing the component file, I'll point it to `/api/admin/invites`.
-      // I will create that route next.
 
       const response = await fetch('/api/admin/invites', {
         method: 'POST',

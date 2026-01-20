@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, FormEvent } from 'react'
+import { useState, useEffect, FormEvent } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { sanitizeHTML } from '@/lib/security'
 import { csrfProtector } from '@/lib/csrf'
@@ -118,9 +118,7 @@ export default function SecureRSVPForm() {
         inviteCode: inviteData?.inviteCode,
         guests: localGuests.map(g => ({
           id: g.id,
-          isAttending: g.isAttending || false, // If null/unselected, treat as false? Or force selection? 
-          // Requirement: "if a user submits a list who has some guests unselected then they are not coming"
-          // So null -> false.
+          isAttending: g.isAttending || false,
           dietaryRequirements: g.dietaryRequirements
         })),
         message: userMessage,
