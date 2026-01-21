@@ -20,26 +20,15 @@ export async function resetInvite(formData: FormData) {
 
   await sql`
     UPDATE invites
-    SET message = NULL,
+    SET "userMessage" = NULL,
         "updatedAt" = "createdAt"
     WHERE id = ${inviteId}
   `
 
   await sql`
-    DELETE FROM guests
-    WHERE "inviteId" = ${inviteId}
-    AND id NOT IN (
-      SELECT id FROM guests
-      WHERE "inviteId" = ${inviteId}
-      ORDER BY "createdAt" ASC
-      LIMIT 1
-    )
-  `
-
-  await sql`
     UPDATE guests
-    SET status = 'UNSELECTED',
-        "dietNotes" = NULL,
+    SET "isAttending" = NULL,
+        "dietaryRequirements" = NULL,
         "updatedAt" = NOW()
     WHERE "inviteId" = ${inviteId}
   `

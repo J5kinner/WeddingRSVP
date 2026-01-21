@@ -6,35 +6,28 @@ datasource db {
   provider = "postgresql"
 }
 
-enum GuestStatus {
-  ATTENDING
-  NOT_ATTENDING
-  UNSELECTED
-}
-
 model Invite {
-  id         String   @id @default(cuid())
-  inviteCode String   @unique
-  message    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  guests     Guest[]
+  id          String   @id @default(cuid())
+  inviteCode  String   @unique
+  userMessage String?
+  guests      Guest[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([inviteCode])
   @@map("invites")
 }
 
 model Guest {
-  id        String   @id @default(cuid())
-  inviteId  String
-  name      String
-  status    GuestStatus @default(UNSELECTED)
-  dietNotes String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  invite    Invite   @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  inviteId            String
+  name                String
+  isAttending         Boolean?
+  dietaryRequirements String?
+  invite              Invite   @relation(fields: [inviteId], references: [id], onDelete: Cascade)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 
   @@index([inviteId])
-  @@index([status])
   @@map("guests")
 }
