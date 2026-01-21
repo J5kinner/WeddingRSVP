@@ -23,12 +23,12 @@ export default function NotFound() {
 ⠀⠀⠀⠀⠀⠀⠀⠈⠛⠻⠿⠿⠿⠿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀`}
             </pre>
 
-            <a
+            <link
                 href="/"
                 className="mt-8 px-6 py-3 bg-amber-500 hover:bg-amber-600 text-gray-900 font-semibold rounded-lg transition-colors duration-200"
             >
                 404! hello there hackerman, go home!
-            </a>
+            </link>
         </div>
     );
 }
