@@ -115,7 +115,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
               statusColor = 'bg-blue-50 text-blue-800 border-blue-200'
             }
 
-            const inviteLink = origin ? `${origin}/?inviteCode=${invite.inviteCode}#rsvp` : ''
+            const inviteLink = origin ? `${origin}/?inviteCode=${invite.inviteCode}` : ''
 
             return (
               <div
