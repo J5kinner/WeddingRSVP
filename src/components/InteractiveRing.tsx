@@ -1,101 +1,51 @@
 'use client';
 
-import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { useGLTF, PresentationControls, Float, ContactShadows, Environment } from '@react-three/drei';
+import { useRef, useMemo, Suspense } from 'react';
 import * as THREE from 'three';
 
-function SpinnableRingModel() {
-    const gltf = useLoader(GLTFLoader, '/ring_model.glb');
-    const meshRef = useRef<THREE.Group>(null);
-    const isDraggingRef = useRef(false);
-    const rotationRef = useRef({ x: 0, y: 0 });
-    const previousPointerRef = useRef({ x: 0, y: 0 });
-    const autoSpinRef = useRef(true);
-    const targetRotationRef = useRef({ x: 0, y: 0 });
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const { pointer } = useThree();
+//Upright ring full res
+const ringModel = '/oliviasRing2.glb';
+//Rotated 45 degrees on y axis low res
+//const ringModel = '/oliviasRing.glb';
+//Jonahs ring full res
+//const ringModel = '/jonahRing.glb';
 
-    // Handle rotation based on drag - runs every frame for smooth updates
-    useFrame(() => {
-        if (meshRef.current) {
-            if (isDraggingRef.current) {
-                // Calculate delta movement
-                const deltaX = pointer.x - previousPointerRef.current.x;
-                const deltaY = pointer.y - previousPointerRef.current.y;
-
-                // Update rotation based on drag (directly modify ref for immediate update)
-                rotationRef.current.x += deltaY * 3;
-                rotationRef.current.y += deltaX * 3;
-
-                previousPointerRef.current = { x: pointer.x, y: pointer.y };
-
-                // Disable auto-spin while dragging
-                autoSpinRef.current = false;
-            } else if (autoSpinRef.current) {
-                // Auto-spin: slowly rotate around Y axis
-                rotationRef.current.y += 0.01;
-            } else {
-                // Smoothly interpolate back to auto-spin rotation
-                const lerpFactor = 0.05;
-                rotationRef.current.x = THREE.MathUtils.lerp(
-                    rotationRef.current.x,
-                    targetRotationRef.current.x,
-                    lerpFactor
-                );
-                rotationRef.current.y = THREE.MathUtils.lerp(
-                    rotationRef.current.y,
-                    targetRotationRef.current.y,
-                    lerpFactor
-                );
-
-                // Continue auto-spin on Y axis for target
-                targetRotationRef.current.y += 0.01;
-
-                // Check if we're close enough to target, then re-enable auto-spin
-                const diffX = Math.abs(rotationRef.current.x - targetRotationRef.current.x);
-                const diffY = Math.abs(rotationRef.current.y - targetRotationRef.current.y);
-                if (diffX < 0.01 && diffY < 0.01) {
-                    autoSpinRef.current = true;
+function Ring({ rotationRef }: { rotationRef: React.MutableRefObject<{ y: number }> }) {
+    const { scene: gltfScene } = useGLTF(ringModel);
+    const scene = useMemo(() => {
+        const cloned = gltfScene.clone();
+        cloned.traverse((node) => {
+            if (node instanceof THREE.Light) {
+                node.visible = false;
+            }
+            if (node instanceof THREE.Mesh) {
+                node.castShadow = true;
+                node.receiveShadow = true;
+                if (node.material instanceof THREE.MeshStandardMaterial) {
+                    node.material.envMapIntensity = 1.5;
                 }
             }
+        });
+        return cloned;
+    }, [gltfScene]);
 
-            // Apply rotation to the mesh every frame
-            meshRef.current.rotation.x = rotationRef.current.x;
+    const meshRef = useRef<THREE.Group>(null);
+
+    useFrame((_state, delta) => {
+        if (meshRef.current) {
+            rotationRef.current.y += delta * 0.4;
             meshRef.current.rotation.y = rotationRef.current.y;
         }
     });
 
-    const handlePointerDown = () => {
-        isDraggingRef.current = true;
-        previousPointerRef.current = { x: pointer.x, y: pointer.y };
-
-        // Clear any pending timeout
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-    };
-
-    const handlePointerUp = () => {
-        isDraggingRef.current = false;
-
-        // Set target rotation to current rotation with X reset to 0
-        targetRotationRef.current = {
-            x: 0,
-            y: rotationRef.current.y
-        };
-    };
-
     return (
         <primitive
             ref={meshRef}
-            object={gltf.scene}
+            object={scene}
             scale={5}
             position={[0, 0, 0]}
-            onPointerDown={handlePointerDown}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
         />
     );
 }
@@ -105,21 +55,66 @@ interface InteractiveRingProps {
 }
 
 export default function InteractiveRing({ className = '' }: InteractiveRingProps) {
+
+    const rotationRef = useRef({ y: 0 });
+
     return (
         <div
             className={`w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 ${className}`}
             style={{ cursor: 'grab' }}
         >
             <Canvas
-                camera={{ position: [0, 0, 8], fov: 50 }}
+                camera={{ position: [0, 0, 8], fov: 45 }}
                 gl={{ alpha: true, antialias: true }}
+                shadows
             >
-                <ambientLight intensity={0.6} />
-                <directionalLight position={[10, 10, 5]} intensity={1.2} />
-                <pointLight position={[-10, -10, -5]} intensity={0.7} />
-                <pointLight position={[0, 10, 0]} intensity={0.5} />
-                <SpinnableRingModel />
+                {/*
+                FIXED LIGHTING:
+                original lighting 
+                */}
+                <pointLight position={[3, 3, 3]} intensity={200} />
+                <pointLight position={[-4, -1, 8]} intensity={120} />
+                <pointLight position={[-3, 3, -4]} intensity={200} />
+                <ambientLight intensity={5} />
+
+                {/* <ambientLight intensity={1} />
+                <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={500} castShadow />
+                <pointLight position={[-10, -10, -10]} intensity={300} />
+                <pointLight position={[5, 5, 5]} intensity={400} /> */}
+
+                {/* Environment map provides realistic metallic reflections */}
+                <Suspense fallback={null}>
+                    <Environment preset="city" />
+
+                    <PresentationControls
+                        global
+                        snap
+                        rotation={[0, 0, 0]}
+                        polar={[-Math.PI / 3, Math.PI / 3]}
+                        azimuth={[-Math.PI / 1.4, Math.PI / 1.4]}
+                    >
+                        <Float
+                            speed={2}
+                            rotationIntensity={0.2}
+                            floatIntensity={0.5}
+                            floatingRange={[-0.1, 0.1]}
+                        >
+                            <Ring rotationRef={rotationRef} />
+                        </Float>
+                    </PresentationControls>
+
+                    {/* Floor shadow*/}
+                    <ContactShadows
+                        position={[0, -2, 0]}
+                        opacity={0.4}
+                        scale={10}
+                        blur={2.5}
+                        far={4}
+                    />
+                </Suspense>
             </Canvas>
         </div>
     );
 }
+// Preload the model to avoid pop-in
+useGLTF.preload(ringModel);
