@@ -72,15 +72,15 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
                 FIXED LIGHTING:
                 original lighting 
                 */}
-                <pointLight position={[3, 3, 3]} intensity={200} />
+                {/* <pointLight position={[3, 3, 3]} intensity={200} />
                 <pointLight position={[-4, -1, 8]} intensity={120} />
                 <pointLight position={[-3, 3, -4]} intensity={200} />
-                <ambientLight intensity={5} />
+                <ambientLight intensity={5} /> */}
 
-                {/* <ambientLight intensity={1} />
+                <ambientLight intensity={1} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={500} castShadow />
                 <pointLight position={[-10, -10, -10]} intensity={300} />
-                <pointLight position={[5, 5, 5]} intensity={400} /> */}
+                <pointLight position={[5, 5, 5]} intensity={400} />
 
                 {/* Environment map provides realistic metallic reflections */}
                 <Suspense fallback={null}>
