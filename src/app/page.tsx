@@ -1,7 +1,7 @@
-import Image from 'next/image'
 import { Suspense } from 'react'
 import SecureRSVPForm from './components/SecureRSVPForm'
 import VideoScrubSection from './components/VideoScrubSection'
+import InteractiveRing from '@/components/InteractiveRing'
 
 export default function Home() {
   return (
@@ -23,14 +23,7 @@ export default function Home() {
 
             <div className="flex flex-col items-center order-1 md:order-2 space-y-4">
               <div className="relative flex items-center justify-center">
-                <Image
-                  src="/wreath.png"
-                  alt="Botanical wreath"
-                  width={280}
-                  height={240}
-                  priority
-                  className="h-auto w-48 sm:w-56 md:w-64"
-                />
+                <InteractiveRing />
               </div>
               <h1 className="text-xl sm:text-2xl md:text-3xl font-serif text-[color:var(--color-text-charcoal)] text-center">
                 May 18, 2026

@@ -29,6 +29,10 @@ const dancingScript = Dancing_Script({
 export const metadata: Metadata = {
   title: "Olivia & Jonah - Wedding RSVP",
   description: "Join us for our special day",
+  icons: {
+    icon: "/ojswoosh.webp",
+    apple: "/ojswoosh.webp",
+  },
 };
 
 export default function RootLayout({
