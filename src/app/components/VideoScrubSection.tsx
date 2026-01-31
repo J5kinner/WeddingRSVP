@@ -80,13 +80,17 @@ export default function VideoScrubSection() {
                     playsInline
                     muted
                     loop
+                    autoPlay
                     preload="auto"
                     onLoadedMetadata={handleLoadedMetadata}
+                    onPlaying={() => {
+                        if (videoRef.current) videoRef.current.pause()
+                    }}
                     onSeeking={() => { isSeeking.current = true }}
                     onSeeked={() => { isSeeking.current = false }}
                     key={isMobile ? 'mobile' : 'desktop'} // Force re-render on change
                 >
-                    <source src={isMobile ? "/mob_2.mp4" : "/web_1.mp4"} type="video/mp4" />
+                    <source src={isMobile ? "/mobile_scrub.mp4" : "/web_scrub.mp4"} type="video/mp4" />
                     Your browser does not support the video tag.
                 </video>
 
