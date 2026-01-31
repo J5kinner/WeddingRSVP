@@ -126,28 +126,28 @@ export default function AdminCsvImport() {
     <div className="bg-white rounded-xl shadow-lg p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold text-gray-900">Bulk import guests</h2>
-          <p className="text-sm text-gray-600 mt-1">Upload a CSV with one name per line (or in the first column).</p>
+          <h2 className="text-2xl font-semibold text-[#000000]">Bulk import guests</h2>
+          <p className="text-sm text-[#000000] mt-1">Upload a CSV with one name per line (or in the first column).</p>
         </div>
         <input
           type="file"
           accept=".csv,text/csv"
           onChange={handleFileChange}
-          className="text-sm text-gray-700"
+          className="text-sm text-[#000000]"
           aria-label="Upload CSV file"
         />
       </div>
 
       {fileName && (
-        <p className="text-sm text-gray-700">
+        <p className="text-sm text-[#000000]">
           File loaded: <span className="font-semibold">{sanitizeHTML(fileName)}</span> ({parsedCount} names)
         </p>
       )}
 
-      <div className="flex items-center gap-4 text-sm text-gray-700">
+      <div className="flex items-center gap-4 text-sm text-[#000000]">
         <span>Parsed: {parsedCount}</span>
-        <span className="text-green-700">Imported: {successCount}</span>
-        <span className="text-red-700">Errors: {errorCount}</span>
+        <span className="text-[#000000]">Imported: {successCount}</span>
+        <span className="text-[#000000]">Errors: {errorCount}</span>
         <span className="ml-auto">{progress}%</span>
       </div>
 
@@ -161,7 +161,7 @@ export default function AdminCsvImport() {
         />
       </div>
 
-      {error && <p className="text-sm text-red-600">{sanitizeHTML(error)}</p>}
+      {error && <p className="text-sm text-[#000000]">{sanitizeHTML(error)}</p>}
 
       <button
         type="button"
@@ -177,23 +177,21 @@ export default function AdminCsvImport() {
           <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-3 py-2 text-left font-semibold text-gray-700">Name</th>
-                <th className="px-3 py-2 text-left font-semibold text-gray-700">Status</th>
-                <th className="px-3 py-2 text-left font-semibold text-gray-700">Message</th>
+                <th className="px-3 py-2 text-left font-semibold text-[#000000]">Name</th>
+                <th className="px-3 py-2 text-left font-semibold text-[#000000]">Status</th>
+                <th className="px-3 py-2 text-left font-semibold text-[#000000]">Message</th>
               </tr>
             </thead>
             <tbody>
               {results.map((result) => (
                 <tr key={`${result.name}-${result.status}-${result.message || ''}`} className="border-t border-gray-200">
-                  <td className="px-3 py-2 text-gray-900">{sanitizeHTML(result.name)}</td>
+                  <td className="px-3 py-2 text-[#000000]">{sanitizeHTML(result.name)}</td>
                   <td
-                    className={`px-3 py-2 font-medium ${
-                      result.status === 'success' ? 'text-green-700' : 'text-red-700'
-                    }`}
+                    className={`px-3 py-2 font-medium text-[#000000]`}
                   >
                     {result.status === 'success' ? 'Created' : 'Error'}
                   </td>
-                  <td className="px-3 py-2 text-gray-700">
+                  <td className="px-3 py-2 text-[#000000]">
                     {result.message ? sanitizeHTML(result.message) : '—'}
                   </td>
                 </tr>

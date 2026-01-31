@@ -47,7 +47,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
 
   if (!rsvps || rsvps.length === 0) {
     return (
-      <div className="text-center py-8 text-gray-500">
+      <div className="text-center py-8 text-[#000000]">
         No RSVPs yet. Be the first to respond!
       </div>
     )
@@ -67,29 +67,29 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
   return (
     <div className="space-y-6">
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">RSVP Summary</h3>
+        <h3 className="font-semibold text-[#000000] mb-2">RSVP Summary</h3>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="text-blue-700 block">Invites:</span>
+            <span className="text-[#000000] block">Invites:</span>
             <span className="font-semibold text-lg">{rsvps.length}</span>
           </div>
           <div>
-            <span className="text-blue-700 block">Attending Guests:</span>
-            <span className="font-semibold text-lg text-green-700">{attendingGuests}</span>
+            <span className="text-[#000000] block">Attending Guests:</span>
+            <span className="font-semibold text-lg text-[#000000]">{attendingGuests}</span>
           </div>
           <div>
-            <span className="text-blue-700 block">Declined Guests:</span>
-            <span className="font-semibold text-lg text-gray-700">{declinedGuests}</span>
+            <span className="text-[#000000] block">Declined Guests:</span>
+            <span className="font-semibold text-lg text-[#000000]">{declinedGuests}</span>
           </div>
           <div>
-            <span className="text-blue-700 block">Pending/No Response:</span>
-            <span className="font-semibold text-lg text-yellow-700">{pendingGuests}</span>
+            <span className="text-[#000000] block">Pending/No Response:</span>
+            <span className="font-semibold text-lg text-[#000000]">{pendingGuests}</span>
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">All RSVPs</h3>
+        <h3 className="text-lg font-semibold text-[#000000]">All RSVPs</h3>
         <div className="space-y-3">
           {rsvps.map((invite) => {
             const attendingCount = invite.guests.filter((guest) => guest.isAttending === true).length
@@ -103,16 +103,16 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
 
             if (attendingCount > 0 && attendingCount === totalCount) {
               statusLabel = 'All Attending'
-              statusColor = 'bg-green-100 text-green-800 border-green-200'
+              statusColor = 'bg-green-100 text-[#000000] border-green-200'
             } else if (attendingCount > 0) {
               statusLabel = 'Some Attending'
-              statusColor = 'bg-green-50 text-green-800 border-green-200'
+              statusColor = 'bg-green-50 text-[#000000] border-green-200'
             } else if (isFullyDeclined) {
               statusLabel = 'Not Attending'
-              statusColor = 'bg-gray-100 text-gray-800 border-gray-200'
+              statusColor = 'bg-gray-100 text-[#000000] border-gray-200'
             } else if (isUnanswered) {
               statusLabel = 'No Response'
-              statusColor = 'bg-blue-50 text-blue-800 border-blue-200'
+              statusColor = 'bg-blue-50 text-[#000000] border-blue-200'
             }
 
             const inviteLink = origin ? `${origin}/?inviteCode=${invite.inviteCode}` : ''
@@ -128,7 +128,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 space-y-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-gray-900">
+                      <h4 className="font-semibold text-[#000000]">
                         {sanitizeHTML(guestNames)}
                       </h4>
 
@@ -146,7 +146,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                       {inviteLink && (
                         <button
                           onClick={() => copyToClipboard(inviteLink)}
-                          className="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1 hover:underline"
+                          className="text-xs text-[#000000] hover:underline font-medium flex items-center gap-1"
                           title="Copy Link to Clipboard"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -159,7 +159,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                     </div>
 
                     {invite.message && (
-                      <p className="text-sm text-gray-700 italic mt-1">
+                      <p className="text-sm text-[#000000] italic mt-1">
                         &quot;{sanitizeHTML(invite.message)}&quot;
                       </p>
                     )}
@@ -170,7 +170,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                             <input type="hidden" name="inviteId" value={invite.id} />
                             <button
                               type="submit"
-                              className="text-xs font-medium text-blue-700 hover:text-blue-800 underline"
+                              className="text-xs font-medium text-[#000000] underline"
                             >
                               Reset
                             </button>
@@ -181,7 +181,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                             <input type="hidden" name="inviteId" value={invite.id} />
                             <button
                               type="submit"
-                              className="text-xs font-medium text-red-700 hover:text-red-800 underline"
+                              className="text-xs font-medium text-[#000000] underline"
                             >
                               Delete
                             </button>
@@ -190,7 +190,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                       </div>
                     )}
                   </div>
-                  <span className="text-xs text-gray-500 whitespace-nowrap" suppressHydrationWarning>
+                  <span className="text-xs text-[#000000] whitespace-nowrap" suppressHydrationWarning>
                     {formatDate(invite.updatedAt)}
                   </span>
                 </div>
@@ -202,19 +202,19 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                       className="flex items-start justify-between rounded-md border border-dashed border-gray-200 bg-white/60 px-3 py-2"
                     >
                       <div>
-                        <p className="font-medium text-gray-900">{sanitizeHTML(guest.name)}</p>
+                        <p className="font-medium text-[#000000]">{sanitizeHTML(guest.name)}</p>
                         {guest.dietaryRequirements && (
-                          <p className="text-sm text-gray-700">
+                          <p className="text-sm text-[#000000]">
                             <span className="font-medium">Diet:</span> {sanitizeHTML(guest.dietaryRequirements)}
                           </p>
                         )}
                       </div>
                       <span
                         className={`text-xs px-2 py-1 rounded ${guest.isAttending === true
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 text-[#000000]'
                           : guest.isAttending === false
-                            ? 'bg-gray-100 text-gray-800'
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-gray-100 text-[#000000]'
+                            : 'bg-yellow-100 text-[#000000]'
                           }`}
                       >
                         {guest.isAttending === true
@@ -226,7 +226,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-[#000000] mt-2">
                   Guests: {attendingCount}/{totalCount} attending
                 </p>
               </div>

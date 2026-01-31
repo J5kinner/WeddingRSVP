@@ -152,10 +152,10 @@ export default function SecureRSVPForm() {
   if (!inviteData) {
     return (
       <div className="w-full max-w-md mx-auto p-6 bg-white rounded-xl shadow-lg border border-[#E5E9EB]">
-        <h2 className="text-2xl font-serif text-[#1F2937] mb-4 text-center">Find Your Invite</h2>
+        <h2 className="text-2xl font-serif text-[#000000] mb-4 text-center">Find Your Invite</h2>
         <form onSubmit={handleManualLookup} className="space-y-4">
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Invite Code</label>
+            <label htmlFor="code" className="block text-sm font-medium text-[#000000] mb-1">Invite Code</label>
             <input
               id="code"
               type="text"
@@ -166,7 +166,7 @@ export default function SecureRSVPForm() {
               required
             />
           </div>
-          {error && <p className="text-red-600 text-sm">{sanitizeHTML(error)}</p>}
+          {error && <p className="text-[#000000] text-sm">{sanitizeHTML(error)}</p>}
           <button
             type="submit"
             disabled={isLoading}
@@ -183,8 +183,8 @@ export default function SecureRSVPForm() {
   return (
     <div className="w-full max-w-2xl mx-auto p-6 lg:p-8 bg-white/95 backdrop-blur-sm rounded-xl shadow-xl border border-[#E5E9EB]">
       <div className="mb-8 text-center">
-        <h2 className="text-3xl font-serif text-[#1F2937] mb-2">RSVP</h2>
-        <p className="text-gray-600">Please let us know if you can make it.</p>
+        <h2 className="text-3xl font-serif text-[#000000] mb-2">RSVP</h2>
+        <p className="text-[#000000]">Please let us know if you can make it.</p>
       </div>
 
       {submitStatus === 'success' ? (
@@ -192,8 +192,8 @@ export default function SecureRSVPForm() {
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
             <Check className="w-8 h-8" />
           </div>
-          <h3 className="text-2xl font-serif text-[#1F2937]">Thank You!</h3>
-          <p className="text-gray-600">Your RSVP has been sent. We can&apos;t wait to celebrate with you!</p>
+          <h3 className="text-2xl font-serif text-[#000000]">Thank You!</h3>
+          <p className="text-[#000000]">Your RSVP has been sent. We can&apos;t wait to celebrate with you!</p>
           <button
             onClick={() => setSubmitStatus(null)}
             className="text-[#6B8E23] font-medium hover:underline mt-4"
@@ -210,14 +210,14 @@ export default function SecureRSVPForm() {
               <div key={guest.id} className="p-4 border border-gray-200 rounded-lg bg-gray-50/50">
                 <div className="flex items-start justify-between mb-3">
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{sanitizeHTML(guest.name)}</h3>
+                    <h3 className="text-lg font-medium text-[#000000]">{sanitizeHTML(guest.name)}</h3>
                   </div>
                   <div className="flex gap-2">
                     <label className={`
                                     cursor-pointer px-3 py-2 rounded-md border text-sm font-medium transition-all flex items-center gap-2
                                     ${guest.isAttending === true
                         ? 'bg-[#6B8E23] text-white border-[#6B8E23]'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
+                        : 'bg-white text-[#000000] border-gray-300 hover:bg-gray-50'}
                                 `}>
                       <input
                         type="radio"
@@ -233,7 +233,7 @@ export default function SecureRSVPForm() {
                                     cursor-pointer px-3 py-2 rounded-md border text-sm font-medium transition-all flex items-center gap-2
                                     ${guest.isAttending === false
                         ? 'bg-gray-800 text-white border-gray-800'
-                        : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}
+                        : 'bg-white text-[#000000] border-gray-300 hover:bg-gray-50'}
                                 `}>
                       <input
                         type="radio"
@@ -251,7 +251,7 @@ export default function SecureRSVPForm() {
                 {/* Dietary Requirements - Only show if attending */}
                 {guest.isAttending === true && (
                   <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-[#000000] mb-1">
                       Dietary Requirements
                     </label>
                     <select
@@ -275,7 +275,7 @@ export default function SecureRSVPForm() {
 
           {/* Message */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-[#000000] mb-1">
               Message for the Happy Couple (Optional)
             </label>
             <textarea
@@ -288,7 +288,7 @@ export default function SecureRSVPForm() {
           </div>
 
           {submitStatus === 'error' && (
-            <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+            <div className="p-3 bg-red-50 text-[#000000] rounded-lg text-sm">
               Something went wrong. Please try again.
             </div>
           )}

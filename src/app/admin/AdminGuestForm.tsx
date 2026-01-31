@@ -109,7 +109,7 @@ export default function AdminGuestForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-5">
-        <label className="block text-sm font-medium text-gray-700">Guest Names for this Invite</label>
+        <label className="block text-sm font-medium text-[#000000]">Guest Names for this Invite</label>
 
         {formData.guestNames.map((name, index) => (
           <div key={index} className="flex gap-2">
@@ -136,18 +136,18 @@ export default function AdminGuestForm() {
         <button
           type="button"
           onClick={addGuestField}
-          className="text-sm text-blue-600 font-medium hover:text-blue-800"
+          className="text-sm text-[#000000] font-medium hover:underline"
         >
           + Add another guest
         </button>
 
-        {formErrors.names && <p className="text-red-600 text-sm">{sanitizeHTML(formErrors.names)}</p>}
+        {formErrors.names && <p className="text-[#000000] text-sm">{sanitizeHTML(formErrors.names)}</p>}
 
         {submitMessage && (
           <div
             className={`p-3 rounded-lg text-sm ${submitStatus === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-green-50 text-[#000000] border border-green-200'
+              : 'bg-red-50 text-[#000000] border border-red-200'
               }`}
           >
             {sanitizeHTML(submitMessage)}
@@ -165,9 +165,9 @@ export default function AdminGuestForm() {
 
       {createdInviteCode && (
         <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-          <p className="text-sm text-blue-600 mb-1">Invite Created Successfully</p>
-          <p className="text-3xl font-mono font-bold text-blue-900 tracking-wider select-all">{createdInviteCode}</p>
-          <p className="text-xs text-blue-500 mt-2">Share this code with the guests to RSVP</p>
+          <p className="text-sm text-[#000000] mb-1">Invite Created Successfully</p>
+          <p className="text-3xl font-mono font-bold text-[#000000] tracking-wider select-all">{createdInviteCode}</p>
+          <p className="text-xs text-[#000000] mt-2">Share this code with the guests to RSVP</p>
         </div>
       )}
     </div>
