@@ -30,6 +30,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.6",
     "@prisma/config": "^7.3.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "^25.1.0",
@@ -38,6 +39,7 @@
     "@types/three": "^0.182.0",
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.9.19",
+    "cross-env": "^10.1.0",
     "eslint": "^9.39.2",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4.1.18",

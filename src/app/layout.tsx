@@ -35,6 +35,24 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical video assets for desktop */}
+        <link
+          rel="preload"
+          href="https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/web_scrub_opt.mp4"
+          as="video"
+          type="video/mp4"
+          media="(min-width: 768px)"
+        />
+        {/* Preload critical video assets for mobile */}
+        <link
+          rel="preload"
+          href="https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/mobile_scrub_opt.mp4"
+          as="video"
+          type="video/mp4"
+          media="(max-width: 767px)"
+        />
+      </head>
       <body
         className={`${cormorant.variable} ${inter.variable} antialiased`}
       >

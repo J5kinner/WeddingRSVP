@@ -2,7 +2,7 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import SecureRSVPForm from './components/SecureRSVPForm'
 import VideoScrubSection from './components/VideoScrubSection'
-import InteractiveRing from '@/components/InteractiveRing'
+import { InteractiveRing } from '@/components/LazyComponents'
 
 export default function Home() {
   return (
@@ -58,25 +58,132 @@ export default function Home() {
 
       <VideoScrubSection />
 
-      <section id="rsvp" className="min-h-screen flex flex-col bg-white/50 section-spacing border-t border-[color:var(--color-border-subtle)]">
-        <div className="content-container">
-          <div className="max-w-2xl mx-auto space-y-6">
-            <div className="text-center space-y-3">
-              <div className="relative flex items-center justify-center">
-                <InteractiveRing />
+      {/* Mobile Location Details */}
+      <section className="md:hidden flex flex-col bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] pt-20 pb-0">
+        <div className="flex flex-col items-center justify-center text-center px-6">
+
+
+
+          <div className="space-y-14 max-w-sm mx-auto z-10 relative">
+            {/* Where */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Where</h3>
+              <h2 className="font-serif text-[40px] leading-none">Bendooley Estate</h2>
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=Bendooley+Estate,+3020+Old+Hume+Hwy,+Berrima+NSW+2577"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-lg underline underline-offset-4 decoration-[0.5px] hover:text-[color:var(--color-botanical-green)] transition-colors"
+              >
+                3020 Old Hume Hwy, Berrima NSW 2577
+              </a>
+              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+                <p>Parking is available for free on-site.</p>
+                <p>The ceremony will take place on the</p>
+                <p>Homestead Lawn.</p>
+                <p>The reception will take place in the Book Barn.</p>
               </div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl text-[color:var(--color-text-charcoal)]">
-                RSVP
-              </h2>
-              <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]">
-                Please let us know if you&apos;ll be joining us for our special day.
-              </p>
             </div>
 
-            <div className="mt-8">
+            {/* When */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
+              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May,<br />2026</h2>
+              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+                <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
+                <p>The ceremony will be followed by canapes and</p>
+                <p>a reception dinner.</p>
+              </div>
+            </div>
+
+            {/* Dress Code */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Dress code</h3>
+              <h2 className="font-serif text-[40px]">Cocktail</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Map Image */}
+        <div className="w-full mt-16 relative">
+          <Image
+            src="/map.png"
+            alt="Bendooley Estate Map"
+            width={800}
+            height={600}
+            className="w-full h-auto object-cover"
+          />
+        </div>
+      </section>
+
+      {/* Desktop Location Details */}
+      <section className="hidden md:flex h-screen bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] overflow-hidden">
+        {/* Left Side: Text Info */}
+        <div className="w-1/2 h-full flex items-center justify-center p-12 relative">
+          <div className="space-y-12 max-w-lg mx-auto text-center w-full z-10">
+            {/* Where */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Where</h3>
+              <h2 className="font-serif text-[40px] leading-none">Bendooley Estate</h2>
+              <a
+                href="https://www.google.com/maps/dir/?api=1&destination=Bendooley+Estate,+3020+Old+Hume+Hwy,+Berrima+NSW+2577"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-lg underline underline-offset-4 decoration-[0.5px] hover:text-[color:var(--color-botanical-green)] transition-colors"
+              >
+                3020 Old Hume Hwy, Berrima NSW 2577
+              </a>
+              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+                <p>Parking is available for free on-site.</p>
+                <p>The ceremony will take place on the</p>
+                <p>Homestead Lawn.</p>
+                <p>The reception will take place in the Book Barn.</p>
+              </div>
+            </div>
+
+            {/* When */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
+              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May,<br />2026</h2>
+              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+                <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
+                <p>The ceremony will be followed by canapes and</p>
+                <p>a reception dinner.</p>
+              </div>
+            </div>
+
+            {/* Dress Code */}
+            <div className="space-y-4">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Dress code</h3>
+              <h2 className="font-serif text-[40px]">Cocktail</h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Map Image */}
+        <div className="w-1/2 h-full relative">
+          <Image
+            src="/map.png"
+            alt="Bendooley Estate Map"
+            fill
+            className="object-cover"
+            priority
+          />
+        </div>
+      </section>
+
+      <section id="rsvp" className="flex flex-col bg-[#FBF9F5] py-20 lg:py-32">
+        <div className="content-container">
+          <div className="max-w-3xl mx-auto space-y-12">
+            <div className="text-center space-y-6">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">RSVP</h3>
+
+            </div>
+
+            <div className="w-full max-w-lg mx-auto">
               <Suspense fallback={
-                <div className="text-center py-8 text-[color:var(--color-text-charcoal)]">
-                  Loading form...
+                <div className="bg-white rounded-[var(--radius-md)] p-12 text-center shadow-sm border border-[color:var(--color-border-subtle)]">
+                  <div className="text-[color:var(--color-text-charcoal)]">Loading invite...</div>
                 </div>
               }>
                 <SecureRSVPForm />
@@ -86,44 +193,35 @@ export default function Home() {
         </div>
       </section>
 
-      <section id="registry" className="min-h-screen flex flex-col justify-center section-spacing border-t border-[color:var(--color-border-subtle)]">
+      <section id="registry" className="flex flex-col justify-center py-20 lg:py-32 bg-[#F6F2EA] border-t border-[color:var(--color-border-subtle)]">
         <div className="content-container">
-          <div className="max-w-4xl mx-auto space-y-8">
-            <div className="text-center space-y-3">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl text-[color:var(--color-text-charcoal)]">
-                Registry
+          <div className="max-w-3xl mx-auto space-y-12">
+            <div className="text-center space-y-6">
+              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Registry</h3>
+              <h2 className="font-serif text-[clamp(2rem,5vw,40px)] leading-[1.2] text-[color:var(--color-text-charcoal)] max-w-2xl mx-auto">
+                Your presence is our present, but if you&apos;d like to give a gift, we are registered here:
               </h2>
-              <p className="text-sm sm:text-base text-[color:var(--color-text-charcoal)]">
-                Your presence is our present, but if you&apos;d like to give a gift, we are registered here.
-              </p>
             </div>
 
-            <div className="w-full max-w-lg mx-auto bg-white rounded-[var(--radius-md)] shadow-sm border border-[color:var(--color-border-light)] p-8 text-center space-y-6">
-              <div className="mx-auto w-16 h-16 bg-[#000000]/5 rounded-full flex items-center justify-center text-[#000000] mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                </svg>
-              </div>
-
+            <div className="w-full max-w-lg mx-auto bg-white rounded-[var(--radius-md)] shadow-sm border border-[color:var(--color-border-light)] p-8 text-center space-y-8">
               <div className="space-y-2">
-                <h3 className="text-xl text-[color:var(--color-text-charcoal)]">
+                <div className="mx-auto w-12 h-12 bg-[#000000]/5 rounded-full flex items-center justify-center text-[#000000] mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                  </svg>
+                </div>
+                <h3 className="font-serif text-2xl text-[color:var(--color-text-charcoal)]">
                   MyRegistry.com
                 </h3>
-                <p className="text-sm text-[color:var(--color-text-charcoal)]">
-                  View our wishlist and contribution options.
-                </p>
               </div>
 
               <a
                 href="https://www.myregistry.com/giftlist/JonahAndOlivia"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center px-8 py-3 bg-[color:var(--color-botanical-green)] text-white font-medium rounded-[var(--radius-sm)] hover:bg-[color:var(--color-botanical-green)]/90 transition-all shadow-sm hover:shadow-md w-full sm:w-auto"
+                className="inline-flex items-center justify-center px-8 py-3 bg-[color:var(--color-botanical-green)] text-white font-medium rounded-[var(--radius-sm)] hover:bg-[#3d563f] transition-all shadow-sm hover:shadow-md w-full"
               >
                 Visit Registry
-                <svg className="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
               </a>
             </div>
           </div>

@@ -1,18 +1,43 @@
 'use client';
 
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useGLTF, PresentationControls, Float, ContactShadows, Environment } from '@react-three/drei';
-import { useRef, useMemo, Suspense } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { useGLTF, PresentationControls, Float, ContactShadows, Environment, Html, useProgress, AdaptiveDpr } from '@react-three/drei';
+import { useRef, useMemo, Suspense, useEffect } from 'react';
 import * as THREE from 'three';
 
-//Upright ring full res
-const ringModel = '/oliviasRing2.glb';
-//Rotated 45 degrees on y axis low res
-//const ringModel = '/oliviasRing.glb';
-//Jonahs ring full res
-//const ringModel = '/jonahRing.glb';
+// Ring models from Vercel Blob storage
+const RING_MODELS = {
+    FULL: 'https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/oliviasRing2.glb',
+    LOW: 'https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/oliviasRing.glb'
+};
+
+const ringModel = RING_MODELS.LOW;
+
+function RingLoader() {
+    const { progress } = useProgress();
+
+    return (
+        <Html center>
+            <div className="flex flex-col items-center justify-center w-48">
+                <div className="text-black/50 text-[10px] font-medium mb-3 tracking-[0.2em] uppercase whitespace-nowrap">
+                    loading ring...
+                </div>
+                <div className="w-32 h-[1px] bg-black/5 relative">
+                    <div
+                        className="absolute top-0 left-0 h-full bg-black/40 transition-all duration-300 ease-out"
+                        style={{ width: `${progress}%` }}
+                    />
+                </div>
+                <div className="mt-2 text-black/30 text-[8px] font-light tabular-nums">
+                    {Math.round(progress)}%
+                </div>
+            </div>
+        </Html>
+    );
+}
 
 function Ring({ rotationRef }: { rotationRef: React.MutableRefObject<{ y: number }> }) {
+    const { gl, camera } = useThree();
     const { scene: gltfScene } = useGLTF(ringModel);
     const scene = useMemo(() => {
         const cloned = gltfScene.clone();
@@ -30,6 +55,12 @@ function Ring({ rotationRef }: { rotationRef: React.MutableRefObject<{ y: number
         });
         return cloned;
     }, [gltfScene]);
+
+    useEffect(() => {
+        if (scene) {
+            gl.compile(scene, camera);
+        }
+    }, [gl, scene, camera]);
 
     const meshRef = useRef<THREE.Group>(null);
 
@@ -60,34 +91,31 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
 
     return (
         <div
-            className={`w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 ${className}`}
+            className={`w-48 sm:w-56 md:w-64 h-48 sm:h-56 md:h-64 touch-none relative ${className}`}
             style={{ cursor: 'grab' }}
         >
             <Canvas
                 camera={{ position: [0, 0, 8], fov: 45 }}
-                gl={{ alpha: true, antialias: true }}
+                gl={{
+                    alpha: true,
+                    antialias: true,
+                    powerPreference: "high-performance"
+                }}
                 shadows
+                dpr={[1, 2]}
             >
-                {/*
-                FIXED LIGHTING:
-                original lighting 
-                */}
-                {/* <pointLight position={[3, 3, 3]} intensity={200} />
-                <pointLight position={[-4, -1, 8]} intensity={120} />
-                <pointLight position={[-3, 3, -4]} intensity={200} />
-                <ambientLight intensity={5} /> */}
-
+                <AdaptiveDpr pixelated />
                 <ambientLight intensity={1} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={500} castShadow />
                 <pointLight position={[-10, -10, -10]} intensity={300} />
                 <pointLight position={[5, 5, 5]} intensity={400} />
 
                 {/* Environment map provides realistic metallic reflections */}
-                <Suspense fallback={null}>
+                <Suspense fallback={<RingLoader />}>
                     <Environment preset="city" />
 
                     <PresentationControls
-                        global
+                        global={false}
                         snap
                         rotation={[0, 0, 0]}
                         polar={[-Math.PI / 3, Math.PI / 3]}
@@ -116,5 +144,6 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
         </div>
     );
 }
+
 // Preload the model to avoid pop-in
 useGLTF.preload(ringModel);
