@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 import { sanitizeHTML } from '@/lib/security'
 import type { InviteResponse } from '@/types/rsvp'
@@ -31,17 +32,25 @@ interface RSVPListProps {
 
 export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPListProps) {
   const [mounted, setMounted] = useState(false)
+  const [toast, setToast] = useState<{ message: string; id: number } | null>(null)
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true)
   }, [])
 
-  const origin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
+  const rawOrigin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
+  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://oliviaandjonah.xyz')
 
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, guestNames: string) => {
     navigator.clipboard.writeText(text)
-      .then(() => alert('Link copied to clipboard!'))
+      .then(() => {
+        const id = Date.now()
+        setToast({ message: `Copied link for ${guestNames}`, id })
+        setTimeout(() => {
+          setToast(current => (current?.id === id ? null : current))
+        }, 3000)
+      })
       .catch(err => console.error('Failed to copy:', err))
   }
 
@@ -145,7 +154,7 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
                       </code>
                       {inviteLink && (
                         <button
-                          onClick={() => copyToClipboard(inviteLink)}
+                          onClick={() => copyToClipboard(inviteLink, guestNames)}
                           className="text-xs text-[#000000] hover:underline font-medium flex items-center gap-1"
                           title="Copy Link to Clipboard"
                         >
@@ -234,6 +243,26 @@ export default function RSVPList({ rsvps, onResetInvite, onDeleteInvite }: RSVPL
           })}
         </div>
       </div>
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            className="fixed bottom-8 left-1/2 z-50 pointer-events-none"
+          >
+            <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10 ring-1 ring-black/5">
+              <div className="bg-green-500 rounded-full p-1 shadow-sm">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="font-medium text-sm whitespace-nowrap tracking-wide">{toast.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

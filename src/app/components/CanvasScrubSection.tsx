@@ -25,7 +25,13 @@ function hasSlowConnection(): boolean {
         return false
     }
 
-    const connection = (navigator as any).connection
+    const connection = (navigator as Navigator & {
+        connection?: {
+            saveData: boolean;
+            effectiveType: string;
+            downlink: number;
+        }
+    }).connection
     if (!connection) return false
 
     // Check for slow connection indicators
@@ -65,9 +71,6 @@ export default function CanvasScrubSection() {
     useEffect(() => {
         const config = getFrameConfig()
         setFrameConfig(config)
-
-        const isMobile = isMobileDevice()
-        const slowConnection = hasSlowConnection()
 
 
         const handleResize = () => {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
@@ -43,8 +44,8 @@ async function convertFolder(inputFolder, outputFolder, quality = 80, maxWidth =
         totalNewSize += newStats.size;
 
         if ((i + 1) % 50 === 0 || i === files.length - 1) {
-            const progress = ((i + 1) / files.length * 100).toFixed(1);
-            const savedSoFar = ((1 - totalNewSize / totalOriginalSize) * 100).toFixed(1);
+            // const progress = ((i + 1) / files.length * 100).toFixed(1);
+            // const savedSoFar = ((1 - totalNewSize / totalOriginalSize) * 100).toFixed(1);
             // console.log(`Progress: ${i + 1}/${files.length} (${progress}%) - Saved ${savedSoFar}% so far`);
         }
     }
@@ -119,16 +120,16 @@ async function main() {
     console.log('='.repeat(60));
     */
 
-    results.forEach(r => {
+    results.forEach(() => {
         /*
         console.log(`\n${r.description}:`);
         console.log(`  ${r.originalMB} MB → ${r.newMB} MB (saved ${r.savedPercentage}%)`);
         */
     });
 
-    const totalOriginal = results.reduce((sum, r) => sum + parseFloat(r.originalMB), 0);
-    const totalNew = results.reduce((sum, r) => sum + parseFloat(r.newMB), 0);
-    const totalSaved = ((1 - totalNew / totalOriginal) * 100).toFixed(1);
+    // const totalOriginal = results.reduce((sum, r) => sum + parseFloat(r.originalMB), 0);
+    // const totalNew = results.reduce((sum, r) => sum + parseFloat(r.newMB), 0);
+    // const totalSaved = ((1 - totalNew / totalOriginal) * 100).toFixed(1);
 
     /*
     console.log(`\n${'='.repeat(60)}`);

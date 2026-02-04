@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import SecureRSVPForm from './components/SecureRSVPForm'
 import CanvasScrubSection from './components/CanvasScrubSection'
-import { InteractiveRing } from '@/components/LazyComponents'
 import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function Home() {
