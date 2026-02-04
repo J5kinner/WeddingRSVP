@@ -58,13 +58,13 @@ export default function Home() {
 
       <CanvasScrubSection />
 
-      {/* Mobile Location Details */}
-      <section className="md:hidden flex flex-col bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] pt-20 pb-0">
+      {/* Mobile & Tablet Location Details */}
+      <section className="lg:hidden flex flex-col bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] pt-20 pb-0">
         <div className="flex flex-col items-center justify-center text-center px-6">
 
 
 
-          <div className="space-y-14 max-w-sm mx-auto z-10 relative">
+          <div className="space-y-14 max-w-sm md:max-w-md mx-auto z-10 relative">
             {/* Where */}
             <div className="space-y-4">
               <h3 className="font-sans text-base tracking-wide uppercase opacity-80">Where</h3>
@@ -117,7 +117,7 @@ export default function Home() {
       </section>
 
       {/* Desktop Location Details */}
-      <section className="hidden md:flex h-screen bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] overflow-hidden">
+      <section className="hidden lg:flex h-screen bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] overflow-hidden">
         {/* Left Side: Text Info */}
         <div className="w-1/2 h-full flex items-center justify-center p-12 relative">
           <div className="space-y-12 max-w-lg mx-auto text-center w-full z-10">
