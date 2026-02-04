@@ -109,8 +109,8 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
       <main className="max-w-6xl mx-auto space-y-6">
         <div className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">RSVP Responses</h1>
-          <p className="text-lg text-gray-600">
+          <h1 className="text-4xl font-bold text-[#000000] mb-2">RSVP Responses</h1>
+          <p className="text-lg text-[#000000]">
             Secure admin view for reviewing guest responses.
           </p>
         </div>
@@ -118,17 +118,17 @@ export default async function AdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <AdminCsvImport />
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">Create Invite</h2>
-            <p className="text-sm text-gray-600 mb-4">
+            <h2 className="text-2xl font-semibold text-[#000000] mb-4">Create Invite</h2>
+            <p className="text-sm text-[#000000] mb-4">
               Create a new invite and add guests. The invite code will be generated automatically.
             </p>
             <AdminGuestForm />
           </div>
 
           <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-1">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-4">All Responses</h2>
+            <h2 className="text-2xl font-semibold text-[#000000] mb-4">All Responses</h2>
             {error ? (
-              <p className="text-center text-red-600">{error}</p>
+              <p className="text-center text-[#000000]">{error}</p>
             ) : (
               <RSVPList
                 rsvps={rsvps}

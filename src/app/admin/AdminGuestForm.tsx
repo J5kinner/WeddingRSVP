@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { AnimatePresence, motion } from 'framer-motion'
 import { csrfProtector } from '@/lib/csrf'
 import { sanitizeHTML } from '@/lib/security'
 
@@ -24,6 +25,8 @@ export default function AdminGuestForm() {
   const [submitStatus, setSubmitStatus] = useState<'success' | 'error' | null>(null)
   const [submitMessage, setSubmitMessage] = useState('')
   const [createdInviteCode, setCreatedInviteCode] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; id: number } | null>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const generateToken = async () => {
@@ -38,7 +41,24 @@ export default function AdminGuestForm() {
     }
 
     generateToken()
+    setMounted(true)
   }, [])
+
+  const rawOrigin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
+  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://oliviaandjonah.xyz')
+
+  const copyLink = (code: string) => {
+    const link = `${origin}/?inviteCode=${code}`
+    navigator.clipboard.writeText(link)
+      .then(() => {
+        const id = Date.now()
+        setToast({ message: 'Link copied to clipboard!', id })
+        setTimeout(() => {
+          setToast(current => (current?.id === id ? null : current))
+        }, 3000)
+      })
+      .catch(err => console.error('Failed to copy:', err))
+  }
 
   const handleNameChange = (index: number, value: string) => {
     const newNames = [...formData.guestNames]
@@ -109,7 +129,7 @@ export default function AdminGuestForm() {
   return (
     <div className="space-y-6">
       <form onSubmit={handleSubmit} className="space-y-5">
-        <label className="block text-sm font-medium text-gray-700">Guest Names for this Invite</label>
+        <label className="block text-sm font-medium text-[#000000]">Guest Names for this Invite</label>
 
         {formData.guestNames.map((name, index) => (
           <div key={index} className="flex gap-2">
@@ -136,18 +156,18 @@ export default function AdminGuestForm() {
         <button
           type="button"
           onClick={addGuestField}
-          className="text-sm text-blue-600 font-medium hover:text-blue-800"
+          className="text-sm text-[#000000] font-medium hover:underline"
         >
           + Add another guest
         </button>
 
-        {formErrors.names && <p className="text-red-600 text-sm">{sanitizeHTML(formErrors.names)}</p>}
+        {formErrors.names && <p className="text-[#000000] text-sm">{sanitizeHTML(formErrors.names)}</p>}
 
         {submitMessage && (
           <div
             className={`p-3 rounded-lg text-sm ${submitStatus === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-green-50 text-[#000000] border border-green-200'
+              : 'bg-red-50 text-[#000000] border border-red-200'
               }`}
           >
             {sanitizeHTML(submitMessage)}
@@ -164,12 +184,44 @@ export default function AdminGuestForm() {
       </form>
 
       {createdInviteCode && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center">
-          <p className="text-sm text-blue-600 mb-1">Invite Created Successfully</p>
-          <p className="text-3xl font-mono font-bold text-blue-900 tracking-wider select-all">{createdInviteCode}</p>
-          <p className="text-xs text-blue-500 mt-2">Share this code with the guests to RSVP</p>
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 text-center space-y-4">
+          <div>
+            <p className="text-sm text-[#000000] mb-1">Invite Created Successfully</p>
+            <p className="text-3xl font-mono font-bold text-[#000000] tracking-wider select-all">{createdInviteCode}</p>
+          </div>
+          <button
+            onClick={() => copyLink(createdInviteCode)}
+            className="w-full bg-white border border-blue-200 text-blue-600 py-2 px-4 rounded-lg font-medium hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+              <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+            </svg>
+            Copy Invite Link
+          </button>
+          <p className="text-xs text-[#000000]">Share this link with guests to RSVP</p>
         </div>
       )}
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 20, x: '-50%' }}
+            className="fixed bottom-8 left-1/2 z-50 pointer-events-none"
+          >
+            <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10 ring-1 ring-black/5">
+              <div className="bg-green-500 rounded-full p-1 shadow-sm">
+                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <span className="font-medium text-sm whitespace-nowrap tracking-wide">{toast.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

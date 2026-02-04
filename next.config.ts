@@ -1,4 +1,9 @@
 import type { NextConfig } from "next";
+import setupBundleAnalyzer from '@next/bundle-analyzer';
+
+const withBundleAnalyzer = setupBundleAnalyzer({
+  enabled: process.env.ANALYZE === 'true',
+});
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
@@ -7,4 +12,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

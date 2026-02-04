@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Inter, Dancing_Script } from "next/font/google";
+import { Cormorant, Inter } from "next/font/google";
 import "./globals.css";
 
 // Serif font for headings - modern, elegant
-const cormorantGaramond = Cormorant_Garamond({
+const cormorant = Cormorant({
   variable: "--font-serif",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
   display: "swap",
 });
 
@@ -15,14 +16,6 @@ const inter = Inter({
   variable: "--font-sans",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
-// Script font for couple's initials - elegant, timeless
-const dancingScript = Dancing_Script({
-  variable: "--font-script",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -42,8 +35,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical video assets for desktop */}
+        <link
+          rel="preload"
+          href="/web_scrub.mp4"
+          as="video"
+          type="video/mp4"
+          media="(min-width: 768px)"
+        />
+        {/* Preload critical video assets for mobile */}
+        <link
+          rel="preload"
+          href="/mob_scrub.mp4"
+          as="video"
+          type="video/mp4"
+          media="(max-width: 767px)"
+        />
+      </head>
       <body
-        className={`${cormorantGaramond.variable} ${inter.variable} ${dancingScript.variable} antialiased`}
+        className={`${cormorant.variable} ${inter.variable} antialiased`}
       >
         {children}
       </body>
