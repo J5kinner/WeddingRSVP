@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import Image from 'next/image'
 import SecureRSVPForm from './components/SecureRSVPForm'
-import VideoScrubSection from './components/VideoScrubSection'
+import CanvasScrubSection from './components/CanvasScrubSection'
 import { InteractiveRing } from '@/components/LazyComponents'
 
 export default function Home() {
@@ -56,7 +56,7 @@ export default function Home() {
         </div>
       </section>
 
-      <VideoScrubSection />
+      <CanvasScrubSection />
 
       {/* Mobile Location Details */}
       <section className="md:hidden flex flex-col bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] pt-20 pb-0">

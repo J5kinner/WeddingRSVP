@@ -46,13 +46,16 @@ export default function VideoScrubSection() {
                 return response.blob()
             })
             .then(blob => {
+                if (controller.signal.aborted) return
                 const url = URL.createObjectURL(blob)
                 setHqVideoUrl(url)
             })
             .catch(error => {
-                if (error.name !== 'AbortError') {
-                    console.error('Error loading HQ video:', error)
+                // Ignore AbortError and ECONNRESET as they are expected when cancelling large downloads
+                if (error.name === 'AbortError' || error.code === 'ECONNRESET') {
+                    return
                 }
+                console.error('Error loading HQ video:', error)
             })
 
         return () => {
