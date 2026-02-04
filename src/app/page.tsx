@@ -3,10 +3,12 @@ import Image from 'next/image'
 import SecureRSVPForm from './components/SecureRSVPForm'
 import CanvasScrubSection from './components/CanvasScrubSection'
 import { InteractiveRing } from '@/components/LazyComponents'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 export default function Home() {
   return (
     <div className="flex flex-col">
+      <SpeedInsights />
       <section className="min-h-screen flex flex-col items-center justify-center relative bg-[#6B7D5E] text-[#000000] px-6 text-center pt-24 pb-32">
         <div className="flex flex-col items-center space-y-10 md:space-y-14 max-w-5xl mx-auto">
           {/* Header Text */}
