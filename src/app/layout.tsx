@@ -39,7 +39,7 @@ export default function RootLayout({
         {/* Preload critical video assets for desktop */}
         <link
           rel="preload"
-          href="https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/web_scrub_opt.mp4"
+          href="/web_scrub.mp4"
           as="video"
           type="video/mp4"
           media="(min-width: 768px)"
@@ -47,7 +47,7 @@ export default function RootLayout({
         {/* Preload critical video assets for mobile */}
         <link
           rel="preload"
-          href="https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/mobile_scrub_opt.mp4"
+          href="/mob_scrub.mp4"
           as="video"
           type="video/mp4"
           media="(max-width: 767px)"

@@ -7,11 +7,8 @@ export default function VideoScrubSection() {
     const containerRef = useRef<HTMLDivElement>(null)
     const videoRef = useRef<HTMLVideoElement>(null)
     const [videoDuration, setVideoDuration] = useState(0)
-
     const [isMobile, setIsMobile] = useState(false)
     const [hqVideoUrl, setHqVideoUrl] = useState<string | null>(null)
-
-    // Defer HQ download until idle to prevent bandwidth contention
     const [canStartHqDownload, setCanStartHqDownload] = useState(false)
     const downloadTimer = useRef<NodeJS.Timeout>(undefined)
 
@@ -25,30 +22,19 @@ export default function VideoScrubSection() {
         return () => window.removeEventListener('resize', checkMobile)
     }, [])
 
-    // Reset download state when switching modes (e.g. rotating/resizing)
     useEffect(() => {
         setCanStartHqDownload(false)
         setHqVideoUrl(null)
     }, [isMobile])
 
-    const currentMode = isMobile ? 'mobile' : 'desktop'
-    // const baseSrc = isMobile ? "mobile_scrub_opt.mp4" : "web_scrub_opt.mp4"
-    const baseSrc = isMobile ? "mob_scrub.mp4" : "web_scrub.mp4"
-
-    const hqSrc = isMobile ? "mob_scrub.mp4" : "web_scrub.mp4"
-
-    // Use the Blob URL if available, otherwise fallback to the optimized version
-    const videoSrc = hqVideoUrl || baseSrc
+    const hqSrc = isMobile ? "/mob_scrub.mp4" : "/web_scrub.mp4"
 
     useEffect(() => {
-        // Reset HQ url when mode changes so we don't show wrong video
         setHqVideoUrl(null)
 
         if (!canStartHqDownload) return
 
         const controller = new AbortController()
-
-        console.log('Starting download of HQ video:', hqSrc)
 
         fetch(hqSrc, {
             signal: controller.signal,
@@ -61,7 +47,6 @@ export default function VideoScrubSection() {
             })
             .then(blob => {
                 const url = URL.createObjectURL(blob)
-                console.log('HQ video downloaded and ready:', url)
                 setHqVideoUrl(url)
             })
             .catch(error => {
@@ -72,17 +57,12 @@ export default function VideoScrubSection() {
 
         return () => {
             controller.abort()
-            // We can't revoke here easily because we don't have the *new* url yet in this closure
-            // and we don't want to revoke the one that just got set if we unmount?
-            // actually, we should revoke in a separate effect or if we change hqVideoUrl
         }
     }, [hqSrc, canStartHqDownload])
 
-    // Cleanup blob url when it changes or component unmounts
     useEffect(() => {
         return () => {
             if (hqVideoUrl) {
-                console.log('Revoking blob URL:', hqVideoUrl)
                 URL.revokeObjectURL(hqVideoUrl)
             }
         }
@@ -102,12 +82,9 @@ export default function VideoScrubSection() {
 
     const handleLoadedMetadata = () => {
         if (videoRef.current) {
-            console.log('Video loaded:', videoRef.current.currentSrc)
             setVideoDuration(videoRef.current.duration)
         }
     }
-
-
 
     const isSeeking = useRef(false)
     const targetTimeRef = useRef(0)
@@ -121,7 +98,6 @@ export default function VideoScrubSection() {
         }
     })
 
-    // Update target time when duration loads (fixes initial load position)
     useEffect(() => {
         if (videoDuration > 0) {
             const latest = smoothProgress.get()
@@ -136,7 +112,6 @@ export default function VideoScrubSection() {
         let animationFrameId: number
 
         const tick = () => {
-            // Removed readyState check to fix "stuck" frames. We want to update currentTime even if buffering.
             if (videoRef.current && !isSeeking.current && Math.abs(videoRef.current.currentTime - targetTimeRef.current) > 0.1) {
                 videoRef.current.currentTime = targetTimeRef.current
             }
@@ -150,11 +125,7 @@ export default function VideoScrubSection() {
 
     return (
         <div ref={containerRef} className="relative h-[300vh] w-full bg-black">
-
-            {/* Added will-change-transform for hardware acceleration hint */}
             <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center will-change-transform">
-
-                {/* playsInline is CRITICAL for iOS to prevent fullscreen */}
                 <video
                     ref={videoRef}
                     className="w-full h-full object-cover"
@@ -168,33 +139,30 @@ export default function VideoScrubSection() {
                         if (videoRef.current) videoRef.current.pause()
                     }}
                     onCanPlay={() => {
-                        // Start idle timer when video can play (initial load)
                         clearTimeout(downloadTimer.current)
                         downloadTimer.current = setTimeout(() => setCanStartHqDownload(true), 2000)
                     }}
                     onSeeking={() => {
                         isSeeking.current = true
-                        // Cancel download start if user starts interacting
                         clearTimeout(downloadTimer.current)
                     }}
                     onSeeked={() => {
                         isSeeking.current = false
-                        // Restart idle timer when user stops interacting
                         clearTimeout(downloadTimer.current)
                         downloadTimer.current = setTimeout(() => setCanStartHqDownload(true), 2000)
                     }}
-                    key={currentMode}
-                    src={hqVideoUrl || undefined} // Only set direct src when hq is ready
+                    key={isMobile ? 'mobile' : 'desktop'}
+                    src={hqVideoUrl || undefined}
                 >
                     {!hqVideoUrl && (
                         <>
                             <source
-                                src=" web_scrub.mp4"
+                                src="/web_scrub.mp4"
                                 media="(min-width: 768px)"
                                 type="video/mp4"
                             />
                             <source
-                                src=" mob_scrub.mp4"
+                                src="/mob_scrub.mp4"
                                 media="(max-width: 767px)"
                                 type="video/mp4"
                             />
@@ -208,3 +176,4 @@ export default function VideoScrubSection() {
         </div>
     )
 }
+

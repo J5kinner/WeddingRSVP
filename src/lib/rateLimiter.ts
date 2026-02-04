@@ -1,8 +1,3 @@
-/**
- * Rate limiting system for API endpoints.
- * Prevents spam submissions and DoS attacks.
- */
-
 interface RateLimitStore {
   [key: string]: {
     count: number;
@@ -26,43 +21,36 @@ interface RateLimitResult {
   retryAfter?: number;
 }
 
-/**
- * Rate limiting configuration for different endpoints.
- */
 export const RATE_LIMIT_CONFIGS = {
   rsvp: {
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    maxRequests: 3, // Max 3 submissions per 15 minutes per IP
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 3,
     skipSuccessfulRequests: false,
     skipFailedRequests: true
   },
 
   rsvpRead: {
-    windowMs: 1 * 60 * 1000, // 1 minute
-    maxRequests: 120, // Max 60 reads per minute per IP
+    windowMs: 1 * 60 * 1000,
+    maxRequests: 120,
     skipSuccessfulRequests: true,
     skipFailedRequests: false
   },
 
   postOperations: {
-    windowMs: 60 * 60 * 1000, // 1 hour
-    maxRequests: 5, // Max 5 POST requests per hour per IP
+    windowMs: 60 * 60 * 1000,
+    maxRequests: 5,
     skipSuccessfulRequests: false,
     skipFailedRequests: true
   },
 
   guestSearch: {
-    windowMs: 1 * 60 * 1000, // 1 minute
-    maxRequests: 30, // Max 30 searches per minute (generous for typing)
+    windowMs: 1 * 60 * 1000,
+    maxRequests: 30,
     skipSuccessfulRequests: false,
     skipFailedRequests: false
   }
 } as const;
 
-/**
- * Get client identifier from request.
- * Uses `x-forwarded-for`, `cf-connecting-ip`, `x-real-ip`, or falls back to `unknown`.
- */
 export function getClientId(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
@@ -82,9 +70,6 @@ export function getClientId(request: Request): string {
   return 'unknown';
 }
 
-/**
- * Apply rate limiting to a request
- */
 export function checkRateLimit(
   clientId: string,
   config: RateLimitConfig
@@ -92,14 +77,11 @@ export function checkRateLimit(
   const now = Date.now();
   const key = `${clientId}:${config.windowMs}:${config.maxRequests}`;
 
-  // Clean up expired entries periodically (1% chance)
   if (Math.random() < 0.01) {
     cleanupExpiredEntries(now);
   }
 
   const record = rateLimitStore[key];
-
-
 
   if (!record || now > record.resetTime) {
     rateLimitStore[key] = {
@@ -132,9 +114,6 @@ export function checkRateLimit(
   };
 }
 
-/**
- * Cleanup expired rate limit entries
- */
 function cleanupExpiredEntries(now: number): void {
   for (const key in rateLimitStore) {
     if (rateLimitStore[key].resetTime < now) {
@@ -143,9 +122,6 @@ function cleanupExpiredEntries(now: number): void {
   }
 }
 
-/**
- * Rate limit middleware for API routes
- */
 export function createRateLimitMiddleware(config: RateLimitConfig) {
   return (request: Request) => {
     const clientId = getClientId(request);
@@ -181,9 +157,6 @@ export function createRateLimitMiddleware(config: RateLimitConfig) {
   };
 }
 
-/**
- * Advanced rate limiting with different strategies
- */
 export class AdvancedRateLimiter {
   private store: Map<string, number[]> = new Map();
   private windowSize: number;
@@ -194,9 +167,6 @@ export class AdvancedRateLimiter {
     this.maxRequests = maxRequests;
   }
 
-  /**
-   * Sliding window rate limit check
-   */
   isAllowed(clientId: string): boolean {
     const now = Date.now();
     const requests = this.store.get(clientId) || [];
@@ -212,9 +182,6 @@ export class AdvancedRateLimiter {
     return true;
   }
 
-  /**
-   * Get remaining requests for client
-   */
   getRemaining(clientId: string): number {
     const now = Date.now();
     const requests = this.store.get(clientId) || [];
@@ -223,5 +190,5 @@ export class AdvancedRateLimiter {
   }
 }
 
-export const rsvpRateLimiter = new AdvancedRateLimiter(15 * 60 * 1000, 3); // 15min, 3 requests
-export const generalRateLimiter = new AdvancedRateLimiter(60 * 1000, 60); // 1min, 60 requests
+export const rsvpRateLimiter = new AdvancedRateLimiter(15 * 60 * 1000, 3);
+export const generalRateLimiter = new AdvancedRateLimiter(60 * 1000, 60);

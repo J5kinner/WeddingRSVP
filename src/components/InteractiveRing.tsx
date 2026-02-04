@@ -5,13 +5,7 @@ import { useGLTF, PresentationControls, Float, ContactShadows, Environment, Html
 import { useRef, useMemo, Suspense, useEffect } from 'react';
 import * as THREE from 'three';
 
-// Ring models from Vercel Blob storage
-const RING_MODELS = {
-    FULL: 'https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/oliviasRing2.glb',
-    LOW: 'https://u7lbb6vk341m3auo.public.blob.vercel-storage.com/oliviasRing.glb'
-};
-
-const ringModel = RING_MODELS.LOW;
+const RING_MODEL = '/oliviasRing.glb';
 
 function RingLoader() {
     const { progress } = useProgress();
@@ -38,7 +32,7 @@ function RingLoader() {
 
 function Ring({ rotationRef }: { rotationRef: React.MutableRefObject<{ y: number }> }) {
     const { gl, camera } = useThree();
-    const { scene: gltfScene } = useGLTF(ringModel);
+    const { scene: gltfScene } = useGLTF(RING_MODEL);
     const scene = useMemo(() => {
         const cloned = gltfScene.clone();
         cloned.traverse((node) => {
@@ -86,7 +80,6 @@ interface InteractiveRingProps {
 }
 
 export default function InteractiveRing({ className = '' }: InteractiveRingProps) {
-
     const rotationRef = useRef({ y: 0 });
 
     return (
@@ -110,7 +103,6 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
                 <pointLight position={[-10, -10, -10]} intensity={300} />
                 <pointLight position={[5, 5, 5]} intensity={400} />
 
-                {/* Environment map provides realistic metallic reflections */}
                 <Suspense fallback={<RingLoader />}>
                     <Environment preset="city" />
 
@@ -131,7 +123,6 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
                         </Float>
                     </PresentationControls>
 
-                    {/* Floor shadow*/}
                     <ContactShadows
                         position={[0, -2, 0]}
                         opacity={0.4}
@@ -145,5 +136,5 @@ export default function InteractiveRing({ className = '' }: InteractiveRingProps
     );
 }
 
-// Preload the model to avoid pop-in
-useGLTF.preload(ringModel);
+useGLTF.preload(RING_MODEL);
+

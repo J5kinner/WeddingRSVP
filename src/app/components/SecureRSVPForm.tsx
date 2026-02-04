@@ -5,7 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { sanitizeHTML } from '@/lib/security'
 import { csrfProtector } from '@/lib/csrf'
 import { Check, X, Loader2 } from 'lucide-react'
-
 import { InteractiveRing } from '@/components/LazyComponents'
 
 interface Guest {
@@ -27,13 +26,11 @@ export default function SecureRSVPForm() {
   const [mounted, setMounted] = useState(false)
   const [csrfToken, setCsrfToken] = useState<string>('')
 
-  // State for the invite logic
   const [inviteCode, setInviteCode] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [inviteData, setInviteData] = useState<InviteData | null>(null)
 
-  // Form state once invite is loaded
   const [localGuests, setLocalGuests] = useState<Guest[]>([])
   const [userMessage, setUserMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -49,7 +46,6 @@ export default function SecureRSVPForm() {
     if (urlCode) {
       setInviteCode(urlCode)
       fetchInvite(urlCode)
-      // If the URL code matches our last completed code, show success immediately
       if (urlCode === storedCode) {
         setSubmitStatus('success')
       }
@@ -62,13 +58,11 @@ export default function SecureRSVPForm() {
 
   useEffect(() => {
     if (submitStatus === 'success' && containerRef.current) {
-      // Wait for render cycle to update height
       requestAnimationFrame(() => {
         containerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       })
     }
   }, [submitStatus])
-
 
   useEffect(() => {
     const generateToken = async () => {
@@ -183,7 +177,6 @@ export default function SecureRSVPForm() {
     )
   }
 
-  // 1. Initial State: Enter Code
   if (!inviteData) {
     return (
       <div className="w-full max-w-md mx-auto p-12 bg-white rounded-[var(--radius-md)] shadow-sm border border-[color:var(--color-border-light)] transform transition-all hover:shadow-md">
@@ -214,7 +207,6 @@ export default function SecureRSVPForm() {
     )
   }
 
-  // 2. RSVP Form
   return (
     <div ref={containerRef} className="w-full max-w-2xl mx-auto p-6 lg:p-10 bg-white rounded-[var(--radius-md)] shadow-sm border border-[color:var(--color-border-light)]">
       {submitStatus === 'success' ? (
@@ -244,18 +236,13 @@ export default function SecureRSVPForm() {
             <p className="text-[color:var(--color-text-charcoal)] opacity-80">Please let us know if you can make it.</p>
           </div>
           <form onSubmit={handleSubmitRSVP} className="space-y-10">
-
-            {/* Guest List */}
             <div className="space-y-6">
               {localGuests.map((guest) => (
                 <div key={guest.id} className="p-6 border border-[color:var(--color-border-light)] rounded-[var(--radius-md)] bg-[#F8F5F0]/30 hover:bg-[#F8F5F0]/50 transition-colors">
-
-                  {/* Name on top */}
                   <h3 className="text-xl font-serif text-[color:var(--color-text-charcoal)] mb-6 text-left">
                     {sanitizeHTML(guest.name)}
                   </h3>
 
-                  {/* Buttons side-by-side below */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
                     <label className={`
                         cursor-pointer px-4 py-3 rounded-[var(--radius-sm)] border text-sm font-medium transition-all flex items-center justify-center gap-2 group
@@ -292,7 +279,6 @@ export default function SecureRSVPForm() {
                     </label>
                   </div>
 
-                  {/* Dietary Requirements - Only show if attending */}
                   {guest.isAttending === true && (
                     <div className="mt-6 animate-in fade-in slide-in-from-top-1">
                       <label className="block text-xs uppercase tracking-wider font-medium text-[color:var(--color-text-charcoal)] opacity-70 mb-2">
@@ -317,7 +303,6 @@ export default function SecureRSVPForm() {
               ))}
             </div>
 
-            {/* Message */}
             <div className="pt-2">
               <label className="block text-base font-medium text-[color:var(--color-text-charcoal)] mb-3">
                 Message for the Happy Couple (Optional)
@@ -350,3 +335,4 @@ export default function SecureRSVPForm() {
     </div>
   )
 }
+
