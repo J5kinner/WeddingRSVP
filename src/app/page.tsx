@@ -39,6 +39,7 @@ export async function generateMetadata({
           alt: "Olivia & Jonah Wedding Invitation",
         },
       ],
+      siteName: 'Olivia & Jonah',
     },
     twitter: {
       card: "summary_large_image",
