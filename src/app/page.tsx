@@ -46,6 +46,9 @@ export async function generateMetadata({
       description,
       images: [ogUrl.toString()],
     },
+    other: {
+      'fb:app_id': '966242223397117',
+    },
   }
 }
 
