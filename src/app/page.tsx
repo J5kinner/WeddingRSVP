@@ -1,28 +1,56 @@
 import { Suspense } from 'react'
 import Image from 'next/image'
+import type { Metadata } from 'next'
 import SecureRSVPForm from './components/SecureRSVPForm'
 import CanvasScrubSection from './components/CanvasScrubSection'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+
+export async function generateMetadata({
+  searchParams
+}: {
+  searchParams: Promise<{ inviteCode?: string; invitecode?: string }>
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const code = params.inviteCode || params.invitecode;
+
+  const ogUrl = code ? `/api/og?inviteCode=${code}` : '/api/og';
+
+  return {
+    openGraph: {
+      images: [
+        {
+          url: ogUrl,
+          width: 1200,
+          height: 630,
+          alt: "Olivia & Jonah Wedding Invitation",
+        },
+      ],
+    },
+    twitter: {
+      images: [ogUrl],
+    },
+  }
+}
 
 export default function Home() {
   return (
     <div className="flex flex-col">
       <SpeedInsights />
-      <section className="min-h-screen flex flex-col items-center justify-center relative bg-[#6B7D5E] text-[#000000] px-6 text-center pt-24 pb-32">
+      <section className="min-h-screen flex flex-col items-center justify-center relative bg-[color:var(--color-hero-green)] text-[#000000] px-6 text-center pt-24 pb-32">
         <div className="flex flex-col items-center space-y-10 md:space-y-14 max-w-5xl mx-auto">
           {/* Header Text */}
           <div className="space-y-6 md:space-y-6">
-            <p className="font-sans text-[14px] md:text-base font-normal leading-[14px] md:leading-normal tracking-normal text-center">
+            <p className="font-sans text-[16px] font-normal leading-[16px] tracking-normal text-center">
               Together with their families
             </p>
-            <h1 className="font-serif text-[clamp(3.5rem,10vw,90px)] font-normal italic leading-[0.85] tracking-normal text-center">
+            <h1 className="font-serif text-[clamp(4.375rem,12.5vw,90px)] font-normal italic leading-[0.85] tracking-normal text-center">
               Olivia <br className="md:hidden" /> & Jonah
             </h1>
           </div>
 
           {/* Invitation Text */}
           <div className="space-y-8 md:space-y-8">
-            <p className="font-sans text-[14px] md:text-lg font-normal leading-[14px] md:leading-relaxed max-w-[300px] md:max-w-none mx-auto opacity-90 text-center">
+            <p className="font-sans text-[16px] font-normal leading-[16px] max-w-[300px] md:max-w-none mx-auto opacity-90 text-center">
               invite you to join them in the<br /> celebration of their marriage on
             </p>
             <div className="font-serif text-[28px] md:text-[40px] font-normal not-italic leading-[28px] md:leading-none tracking-normal text-center space-y-1 md:space-y-4">
@@ -38,13 +66,13 @@ export default function Home() {
               alt="Leaf Decoration"
               width={775}
               height={534}
-              className="w-32 sm:w-40 md:w-56 h-auto brightness-0"
+              className="w-16 sm:w-20 md:w-28 h-auto brightness-0"
               priority
             />
           </div>
 
           {/* Footer Text */}
-          <p className="font-sans text-[14px] md:text-lg font-normal leading-[14px] md:leading-relaxed opacity-80 pt-4 md:pt-6 text-center">
+          <p className="font-sans text-[16px] font-normal leading-[16px] opacity-80 pt-4 md:pt-6 text-center">
             Please find more details below
           </p>
         </div>
@@ -145,7 +173,7 @@ export default function Home() {
             {/* When */}
             <div className="space-y-4">
               <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
-              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May,<br />2026</h2>
+              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May, 2026</h2>
               <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
                 <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
                 <p>The ceremony will be followed by canapes and</p>
@@ -177,7 +205,6 @@ export default function Home() {
         <div className="content-container">
           <div className="max-w-3xl mx-auto space-y-12">
             <div className="text-center space-y-6">
-              <h3 className="font-sans text-base tracking-wide uppercase opacity-80">RSVP</h3>
 
             </div>
 

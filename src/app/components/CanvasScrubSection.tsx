@@ -305,17 +305,17 @@ export default function CanvasScrubSection() {
 
     return (
         <div ref={containerRef} className="relative h-[300vh] w-full bg-black">
-            <div className="sticky top-0 h-[100dvh] w-full overflow-hidden flex items-center justify-center will-change-transform">
+            <div className="sticky top-0 h-[100dvh] w-full overflow-hidden will-change-transform">
                 <canvas
                     ref={canvasRef}
-                    className="w-full h-full object-cover"
+                    className="absolute inset-0 w-full h-full object-cover"
                     style={{ opacity: isReady ? 1 : 0.5 }}
                 />
 
                 {/* Subtle Progress Bar */}
                 {loadingProgress < 100 && (
                     <div
-                        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none transition-all duration-1000"
+                        className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-2 pointer-events-none transition-all duration-1000"
                         style={{ opacity: isReady ? 0.7 : 1 }}
                     >
                         <div className="w-40 h-[3px] bg-white/20 backdrop-blur-md rounded-full overflow-hidden border border-white/40">
