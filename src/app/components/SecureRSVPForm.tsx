@@ -233,7 +233,7 @@ export default function SecureRSVPForm() {
         <>
           <div className="mb-10 text-center space-y-2">
             <h2 className="text-3xl font-serif text-[color:var(--color-text-charcoal)]">RSVP</h2>
-            <p className="text-[color:var(--color-text-charcoal)] opacity-80">Please let us know if you can make it.</p>
+            <p className="text-[color:var(--color-text-charcoal)] opacity-80">Please let us know if you can make it by the 10th of April.</p>
           </div>
           <form onSubmit={handleSubmitRSVP} className="space-y-10">
             <div className="space-y-6">

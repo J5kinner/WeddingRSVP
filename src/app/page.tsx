@@ -13,13 +13,27 @@ export async function generateMetadata({
   const params = await searchParams;
   const code = params.inviteCode || params.invitecode;
 
-  const ogUrl = code ? `/api/og?inviteCode=${code}` : '/api/og';
+  const baseUrl = 'https://oliviaandjonah.xyz';
+  const ogUrl = new URL('/api/og', baseUrl);
+
+  if (code) {
+    ogUrl.searchParams.set('inviteCode', code);
+  }
+
+  const title = "Olivia & Jonah - Wedding Invitation";
+  const description = "Join us for our wedding celebration on May 18th, 2026. Please RSVP here.";
 
   return {
+    title,
+    description,
     openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: code ? `${baseUrl}/?inviteCode=${code}` : baseUrl,
       images: [
         {
-          url: ogUrl,
+          url: ogUrl.toString(),
           width: 1200,
           height: 630,
           alt: "Olivia & Jonah Wedding Invitation",
@@ -27,7 +41,10 @@ export async function generateMetadata({
       ],
     },
     twitter: {
-      images: [ogUrl],
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogUrl.toString()],
     },
   }
 }
@@ -117,7 +134,7 @@ export default function Home() {
             {/* When */}
             <div className="space-y-4">
               <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
-              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May,<br />2026</h2>
+              <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May, 2026</h2>
               <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
                 <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
                 <p>The ceremony will be followed by canapes and</p>
