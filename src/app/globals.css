@@ -23,6 +23,9 @@
   /* Optional highlight/error: soft rose */
   --color-rose: #D9A6A6;
 
+  /* Hero section green */
+  --color-hero-green: #6B7D5E;
+
   /* Subtle borders and dividers */
   --color-border-subtle: rgba(34, 34, 34, 0.08);
   --color-border-light: rgba(34, 34, 34, 0.12);
@@ -87,8 +90,12 @@
     @apply border-[color:var(--color-border-subtle)];
   }
 
+  html {
+    @apply bg-[color:var(--color-hero-green)];
+  }
+
   body {
-    @apply bg-[color:var(--color-bg-paper)] text-[color:var(--color-text-charcoal)];
+    @apply bg-[color:var(--color-hero-green)] text-[color:var(--color-text-charcoal)];
     font-family: var(--font-sans);
     font-size: 16px;
     /* base mobile size */

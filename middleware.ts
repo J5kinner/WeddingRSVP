@@ -44,16 +44,33 @@ function isAuthorized(request: NextRequest): boolean {
 }
 
 export function middleware(request: NextRequest) {
-  if (!request.nextUrl.pathname.startsWith('/admin')) {
+  const isProduction = process.env.VERCEL_ENV === 'production'
+  const isDevelopment = process.env.NODE_ENV === 'development'
+  const isAdminPath = request.nextUrl.pathname.startsWith('/admin')
+
+  if (!isAdminPath) {
     return NextResponse.next()
   }
 
+  // 1. Disable admin page for production builds
+  if (isProduction) {
+    return new NextResponse(null, { status: 404 })
+  }
+
+  // 2. For non-production environments (Preview or Local Dev):
+  // Check if credentials are configured
   const credentialsConfigured = Boolean(
     (adminUsername && adminPassword) || adminToken
   )
 
+  // If we are in local development and no credentials are set, allow access
+  // This makes local development easier.
+  if (isDevelopment && !credentialsConfigured) {
+    return NextResponse.next()
+  }
+
   if (!credentialsConfigured) {
-    return new NextResponse('Admin access is not configured', { status: 503 })
+    return new NextResponse('Admin access is not configured for this environment', { status: 503 })
   }
 
   if (isAuthorized(request)) {
