@@ -1,46 +1,16 @@
 import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
-import { neon } from '@neondatabase/serverless'
 
 export const runtime = 'edge'
 
 export async function GET(req: NextRequest) {
     try {
-        const { searchParams } = new URL(req.url)
-        const inviteCode = searchParams.get('inviteCode')
-
         const fontData = await fetch(
             new URL('/fonts/CormorantGaramond-SemiBoldItalic.ttf', req.url)
         ).then((res) => res.arrayBuffer())
 
         const imageUrl = new URL('/OG.png', req.url).toString()
 
-        let guestNames = ''
-        if (inviteCode && process.env.DATABASE_URL) {
-            try {
-                const sql = neon(process.env.DATABASE_URL)
-                const inviteRows = await sql`
-          SELECT id FROM invites WHERE "inviteCode" = ${inviteCode} LIMIT 1
-        `
-                if (inviteRows.length > 0) {
-                    const guestRows = await sql`
-            SELECT name FROM guests WHERE "inviteId" = ${inviteRows[0].id}
-          `
-                    if (guestRows.length > 0) {
-                        const names = guestRows.map(g => g.name)
-                        if (names.length === 1) {
-                            guestNames = names[0]
-                        } else if (names.length === 2) {
-                            guestNames = `${names[0]} & ${names[1]}`
-                        } else {
-                            guestNames = `${names[0]}, ${names[1]} & others`
-                        }
-                    }
-                }
-            } catch (e) {
-                console.error('Error fetching names for OG:', e)
-            }
-        }
 
         return new ImageResponse(
             (
@@ -102,7 +72,7 @@ export async function GET(req: NextRequest) {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '12px',
-                                marginBottom: guestNames ? 12 : 0,
+                                marginBottom: 0,
                             }}
                         >
                             <span
@@ -128,20 +98,6 @@ export async function GET(req: NextRequest) {
                             </span>
                         </div>
 
-                        {guestNames && (
-                            <div
-                                style={{
-                                    marginTop: 10,
-                                    paddingTop: 10,
-                                    borderTop: '1px solid #e0e0e0',
-                                    fontSize: 24,
-                                    fontStyle: 'italic',
-                                    color: '#5B6F55',
-                                }}
-                            >
-                                For {guestNames}
-                            </div>
-                        )}
                     </div>
                 </div>
             ),
