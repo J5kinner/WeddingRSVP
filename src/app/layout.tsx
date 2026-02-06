@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   description: "Join us for our special day",
   metadataBase: new URL('https://oliviaandjonah.xyz'),
   icons: {
-    icon: "/Favicon.svg",
-    apple: "/Favicon.svg",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
   openGraph: {
     title: "Olivia & Jonah - Wedding RSVP",
