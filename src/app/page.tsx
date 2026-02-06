@@ -127,10 +127,9 @@ export default function Home() {
               >
                 3020 Old Hume Hwy, Berrima NSW 2577
               </a>
-              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+              <div className="text-base leading-tight space-y-3 pt-2 opacity-90 font-sans">
                 <p>Parking is available for free on-site.</p>
-                <p>The ceremony will take place on the</p>
-                <p>Homestead Lawn.</p>
+                <p>The ceremony will take place on the<br />Homestead Lawn.</p>
                 <p>The reception will take place in the Book Barn.</p>
               </div>
             </div>
@@ -139,10 +138,9 @@ export default function Home() {
             <div className="space-y-4">
               <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
               <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May, 2026</h2>
-              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+              <div className="text-base leading-tight space-y-3 pt-2 opacity-90 font-sans">
                 <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
-                <p>The ceremony will be followed by canapes and</p>
-                <p>a reception dinner.</p>
+                <p>The ceremony will be followed by canapes and<br />a reception dinner.</p>
               </div>
             </div>
 
@@ -183,10 +181,9 @@ export default function Home() {
               >
                 3020 Old Hume Hwy, Berrima NSW 2577
               </a>
-              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+              <div className="text-base leading-tight space-y-3 pt-2 opacity-90 font-sans">
                 <p>Parking is available for free on-site.</p>
-                <p>The ceremony will take place on the</p>
-                <p>Homestead Lawn.</p>
+                <p>The ceremony will take place on the<br />Homestead Lawn.</p>
                 <p>The reception will take place in the Book Barn.</p>
               </div>
             </div>
@@ -195,10 +192,9 @@ export default function Home() {
             <div className="space-y-4">
               <h3 className="font-sans text-base tracking-wide uppercase opacity-80">When</h3>
               <h2 className="font-serif text-[40px] leading-tight">Monday the 18th of May, 2026</h2>
-              <div className="text-base leading-relaxed space-y-1 pt-2 opacity-90 font-sans">
+              <div className="text-base leading-tight space-y-3 pt-2 opacity-90 font-sans">
                 <p>Please arrive at <strong>2:30pm</strong> for a <strong>3:00pm</strong> start.</p>
-                <p>The ceremony will be followed by canapes and</p>
-                <p>a reception dinner.</p>
+                <p>The ceremony will be followed by canapes and<br />a reception dinner.</p>
               </div>
             </div>
 
