@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 // Serif font for headings - modern, elegant
@@ -69,6 +71,8 @@ export default function RootLayout({
         className={`${cormorant.variable} ${inter.variable} antialiased`}
       >
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

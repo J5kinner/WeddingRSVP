@@ -2,7 +2,6 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import SecureRSVPForm from './components/SecureRSVPForm'
-import { SpeedInsights } from "@vercel/speed-insights/next"
 import LazyCanvasScrubSection from './components/LazyCanvasScrubSection'
 
 export async function generateMetadata({
@@ -55,7 +54,6 @@ export async function generateMetadata({
 export default function Home() {
   return (
     <div className="flex flex-col">
-      <SpeedInsights />
       <section className="min-h-screen flex flex-col items-center justify-center relative bg-[color:var(--color-hero-green)] text-[#000000] px-6 text-center pt-24 pb-32">
         <div className="flex flex-col items-center space-y-10 md:space-y-14 max-w-5xl mx-auto">
           {/* Header Text */}

@@ -86,7 +86,7 @@ export default function CanvasScrubSection() {
 
         window.addEventListener('resize', handleResize)
         return () => window.removeEventListener('resize', handleResize)
-    }, [])
+    }, [frameConfig.folder])
 
     const { scrollYProgress } = useScroll({
         target: containerRef,
@@ -315,7 +315,7 @@ export default function CanvasScrubSection() {
 
     return (
         <div ref={containerRef} className="relative h-[300vh] w-full bg-black">
-            <div className="sticky top-0 h-[100dvh] w-full overflow-hidden will-change-transform">
+            <div className="sticky top-0 h-[100vh] w-full overflow-hidden">
                 <canvas
                     ref={canvasRef}
                     className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
