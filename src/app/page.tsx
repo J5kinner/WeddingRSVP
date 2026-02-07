@@ -2,8 +2,8 @@ import { Suspense } from 'react'
 import Image from 'next/image'
 import type { Metadata } from 'next'
 import SecureRSVPForm from './components/SecureRSVPForm'
-import CanvasScrubSection from './components/CanvasScrubSection'
 import { SpeedInsights } from "@vercel/speed-insights/next"
+import LazyCanvasScrubSection from './components/LazyCanvasScrubSection'
 
 export async function generateMetadata({
   searchParams
@@ -105,7 +105,7 @@ export default function Home() {
         </div>
       </section>
 
-      <CanvasScrubSection />
+      <LazyCanvasScrubSection />
 
       {/* Mobile & Tablet Location Details */}
       <section className="lg:hidden flex flex-col bg-[#F6F2EA] text-[color:var(--color-text-charcoal)] pt-20 pb-0">
@@ -160,6 +160,7 @@ export default function Home() {
             alt="Bendooley Estate Map"
             width={800}
             height={600}
+            sizes="(max-width: 768px) 100vw, 800px"
             className="w-full h-auto object-cover"
           />
         </div>
@@ -215,8 +216,8 @@ export default function Home() {
             src="/map.png"
             alt="Bendooley Estate Map"
             fill
+            sizes="50vw"
             className="object-cover"
-            priority
           />
         </div>
       </section>

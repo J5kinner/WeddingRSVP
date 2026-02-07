@@ -64,13 +64,17 @@ export default function CanvasScrubSection() {
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const [imagesLoaded, setImagesLoaded] = useState(0)
     const [isReady, setIsReady] = useState(false)
-    const [frameConfig, setFrameConfig] = useState<FrameConfig>(FRAME_CONFIGS.desktop)
+    const [hasFirstFrame, setHasFirstFrame] = useState(false)
+    // Initialize with correct config to avoid double render/fetch on mount
+    const [frameConfig, setFrameConfig] = useState<FrameConfig>(() => getFrameConfig())
     const imagesRef = useRef<HTMLImageElement[]>([])
     const currentFrameRef = useRef(0)
 
     useEffect(() => {
         const config = getFrameConfig()
-        setFrameConfig(config)
+        if (config.folder !== frameConfig.folder) {
+            setFrameConfig(config)
+        }
 
 
         const handleResize = () => {
@@ -125,6 +129,7 @@ export default function CanvasScrubSection() {
         let isCancelled = false
         setImagesLoaded(0)
         setIsReady(false)
+        setHasFirstFrame(false)
 
         const images: HTMLImageElement[] = new Array(frameConfig.count).fill(null)
         let loadedCount = 0
@@ -148,7 +153,12 @@ export default function CanvasScrubSection() {
                     loadedCount++
                     setImagesLoaded(loadedCount)
 
-                    if (loadedCount === 1) {
+                    if (index === 0) {
+                        renderFrame(0)
+                        setHasFirstFrame(true)
+                    }
+
+                    if (loadedCount === 1 && index !== 0) {
                         renderFrame(0)
                     }
 
@@ -308,8 +318,8 @@ export default function CanvasScrubSection() {
             <div className="sticky top-0 h-[100dvh] w-full overflow-hidden will-change-transform">
                 <canvas
                     ref={canvasRef}
-                    className="absolute inset-0 w-full h-full object-cover"
-                    style={{ opacity: isReady ? 1 : 0.5 }}
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
+                    style={{ opacity: hasFirstFrame ? 1 : 0 }}
                 />
 
                 {/* Subtle Progress Bar */}
