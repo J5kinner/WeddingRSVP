@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Cormorant, Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 // Serif font for headings - modern, elegant
@@ -24,8 +26,8 @@ export const metadata: Metadata = {
   description: "Join us for our special day",
   metadataBase: new URL('https://oliviaandjonah.xyz'),
   icons: {
-    icon: "/Favicon.svg",
-    apple: "/Favicon.svg",
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
   },
   openGraph: {
     title: "Olivia & Jonah - Wedding RSVP",
@@ -63,27 +65,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preload critical video assets for desktop */}
-        <link
-          rel="preload"
-          href="/web_scrub.mp4"
-          as="video"
-          type="video/mp4"
-          media="(min-width: 768px)"
-        />
-        {/* Preload critical video assets for mobile */}
-        <link
-          rel="preload"
-          href="/mob_scrub.mp4"
-          as="video"
-          type="video/mp4"
-          media="(max-width: 767px)"
-        />
+
       </head>
       <body
         className={`${cormorant.variable} ${inter.variable} antialiased`}
       >
         {children}
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
