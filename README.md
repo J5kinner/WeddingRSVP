@@ -1,6 +1,7 @@
 # Wedding RSVP Website
 
-A modern wedding RSVP management system built with Next.js, TypeScript, and Neon PostgreSQL.
+A wedding RSVP management system built with Next.js, TypeScript, and Neon PostgreSQL.
+As well as some friends Emily Savage (Design) and Bailey Gibbons (Game Dev)
 
 ## Features
 
@@ -9,6 +10,14 @@ A modern wedding RSVP management system built with Next.js, TypeScript, and Neon
 - Duplicate prevention (updates existing RSVPs by invite code)
 - Dietary restrictions and special requests tracking
 - Responsive design for mobile and desktop
+- Canvas image scrubbing similar to Apple airpods animation for proposal
+- 3D animated ring of engagement ring
+
+
+
+https://github.com/user-attachments/assets/6b783528-a3cb-4a7e-be59-2e0eced73309
+
+
 
 ## Tech Stack
 
