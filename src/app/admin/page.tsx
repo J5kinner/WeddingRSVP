@@ -1,7 +1,6 @@
 import RSVPList from '@/app/components/RSVPList'
 import { neon } from '@neondatabase/serverless'
 import AdminGuestForm from './AdminGuestForm'
-import AdminCsvImport from './AdminCsvImport'
 import type { InviteResponse } from '@/types/rsvp'
 import { resetInvite, deleteInvite } from './actions'
 
@@ -115,18 +114,10 @@ export default async function AdminPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <AdminCsvImport />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* Left Column: Responded */}
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-[#000000] mb-4">Create Invite</h2>
-            <p className="text-sm text-[#000000] mb-4">
-              Create a new invite and add guests. The invite code will be generated automatically.
-            </p>
-            <AdminGuestForm />
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 lg:col-span-1">
-            <h2 className="text-2xl font-semibold text-[#000000] mb-4">All Responses</h2>
+            <h2 className="text-2xl font-semibold text-[#000000] mb-4">Responses</h2>
             {error ? (
               <p className="text-center text-[#000000]">{error}</p>
             ) : (
@@ -134,8 +125,36 @@ export default async function AdminPage() {
                 rsvps={rsvps}
                 onResetInvite={resetInvite}
                 onDeleteInvite={deleteInvite}
+                filter="responded"
+                showSummary={true}
               />
             )}
+          </div>
+
+          {/* Right Column: Create + Pending */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-semibold text-[#000000] mb-4">Create Invite</h2>
+              <p className="text-sm text-[#000000] mb-4">
+                Create a new invite and add guests. The invite code will be generated automatically.
+              </p>
+              <AdminGuestForm />
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <h2 className="text-2xl font-semibold text-[#000000] mb-4 font-normal">Pending</h2>
+              {error ? (
+                <p className="text-center text-[#000000]">{error}</p>
+              ) : (
+                <RSVPList
+                  rsvps={rsvps}
+                  onResetInvite={resetInvite}
+                  onDeleteInvite={deleteInvite}
+                  filter="pending"
+                  showSummary={false}
+                />
+              )}
+            </div>
           </div>
         </div>
       </main>
