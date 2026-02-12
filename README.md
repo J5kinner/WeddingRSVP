@@ -1,61 +1,58 @@
+https://github.com/user-attachments/assets/1f349fba-e980-4bf0-ad44-9a835eaffe40
+
 # Wedding RSVP Website
 
-A wedding RSVP management system built with Next.js, TypeScript, and Neon PostgreSQL.
-As well as some friends Emily Savage (Design) and Bailey Gibbons (Game Dev)
+[https://oliviaandjonah.xyz/](https://oliviaandjonah.xyz/)
+
+My wedding RSVP form and management system built with Next.js, TypeScript, and Neon PostgreSQL.
+friends who helped: Emily Savage (Design) and Bailey Gibbons (Game Dev help with 3D Ring)
+
+
+# Wedding RSVP
 
 ## Features
-
-- Guest RSVP submission form
-- Real-time RSVP list with summary statistics
-- Duplicate prevention (updates existing RSVPs by invite code)
-- Dietary restrictions and special requests tracking
-- Responsive design for mobile and desktop
-- Canvas image scrubbing similar to Apple airpods animation for proposal
-- 3D animated ring of engagement ring
-
-
-
-https://github.com/user-attachments/assets/6b783528-a3cb-4a7e-be59-2e0eced73309
-
-
+- **Guest Management**: RSVP form with duplicate prevention & dietary tracking
+- **Admin Dashboard**: Real-time summary statistics & guest list
+- **Interactive UI**: 3D animated ring & canvas scrubbing effects
+- **Responsive Design**: Mobile-first layout for all devices
 
 ## Tech Stack
+Next.js 16, TypeScript, Tailwind CSS, Prisma, Neon (PostgreSQL), Three.js (R3F)
 
-- **Framework:** Next.js 16 with App Router
-- **Language:** TypeScript
-- **Database:** Neon (PostgreSQL)
-- **Styling:** Tailwind CSS
-- **ORM:** Prisma
+## Quick Start
 
-## Getting Started
+1. **Install dependencies** (automatically generates Prisma client):
+   ```bash
+   pnpm install
+   ```
 
-1. Install dependencies:
+2. **Environment Setup**:
+   Create a `.env` file in the root directory:
+   ```env
+   DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
+   ```
+
+3. **Run Development Server**:
+   ```bash
+   pnpm dev
+   ```
+
+## Pipeline Checks
+Run these before committing to ensure CI passes:
 ```bash
-pnpm install
+# Linting
+pnpm lint
+
+# Type checking & Build verification
+pnpm build
 ```
 
-2. Set up environment variables:
-Create a `.env` file with your Neon database connection string:
-```
-DATABASE_URL="your-neon-connection-string"
-```
-
-3. Generate Prisma client:
-```bash
-npx prisma generate
-```
-
-4. Run the development server:
-```bash
-pnpm dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) to view the application.
-
-## Database Setup
-
-The database schema is defined in `prisma/schema.prisma`. The RSVP table is automatically created when you first run the application.
+## Database
+- Schema location: `prisma/schema.prisma`
+- Push schema changes: `pnpm dlx prisma db push`
+- View data: `pnpm dlx prisma studio`
 
 ## Deployment
-
-This project can be deployed on Vercel, Netlify, or any platform that supports Next.js applications.
+Standard Next.js deployment (e.g., Vercel).
+- Build command: `pnpm build`
+- Install command: `pnpm install`
