@@ -1,3 +1,13 @@
+https://github.com/user-attachments/assets/1f349fba-e980-4bf0-ad44-9a835eaffe40
+
+# Wedding RSVP Website
+
+[https:// weddingrsvp.vercel.app](https://weddingrsvp.vercel.app)
+
+My wedding RSVP form and management system built with Next.js, TypeScript, and Neon PostgreSQL.
+friends who helped: Emily Savage (Design) and Bailey Gibbons (Game Dev help with 3D Ring)
+
+
 # Wedding RSVP
 
 ## Features
