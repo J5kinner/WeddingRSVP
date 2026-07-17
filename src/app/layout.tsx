@@ -24,7 +24,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "Olivia & Jonah - Wedding RSVP",
   description: "Join us for our special day",
-  metadataBase: new URL('https://oliviaandjonah.xyz'),
+  metadataBase: new URL('https://weddingrsvp.vercel.app'),
   icons: {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Olivia & Jonah - Wedding RSVP",
     description: "Join us for our special day on May 18th, 2026",
-    url: "https://oliviaandjonah.xyz",
+    url: "https://weddingrsvp.vercel.app",
     siteName: "Olivia & Jonah Wedding",
     images: [
       {

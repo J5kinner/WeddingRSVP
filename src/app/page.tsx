@@ -1,7 +1,6 @@
-import { Suspense } from 'react'
 import Image from 'next/image'
 import type { Metadata } from 'next'
-import SecureRSVPForm from './components/SecureRSVPForm'
+import RingCard from './components/RingCard'
 import LazyCanvasScrubSection from './components/LazyCanvasScrubSection'
 
 export async function generateMetadata({
@@ -12,7 +11,7 @@ export async function generateMetadata({
   const params = await searchParams;
   const code = params.inviteCode || params.invitecode;
 
-  const baseUrl = 'https://oliviaandjonah.xyz';
+  const baseUrl = 'https://weddingrsvp.vercel.app';
   const ogUrl = new URL('/api/og', baseUrl);
 
   if (code) {
@@ -225,13 +224,7 @@ export default function Home() {
             </div>
 
             <div className="w-full max-w-lg mx-auto">
-              <Suspense fallback={
-                <div className="bg-white rounded-[var(--radius-md)] p-12 text-center shadow-sm border border-[color:var(--color-border-subtle)]">
-                  <div className="text-[color:var(--color-text-charcoal)]">Loading invite...</div>
-                </div>
-              }>
-                <SecureRSVPForm />
-              </Suspense>
+              <RingCard />
             </div>
           </div>
         </div>
