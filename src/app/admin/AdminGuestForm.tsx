@@ -45,7 +45,7 @@ export default function AdminGuestForm() {
   }, [])
 
   const rawOrigin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
-  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://oliviaandjonah.xyz')
+  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://weddingrsvp.vercel.app')
 
   const copyLink = (code: string) => {
     const link = `${origin}/?inviteCode=${code}`

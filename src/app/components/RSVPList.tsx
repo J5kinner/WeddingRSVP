@@ -62,7 +62,7 @@ export default function RSVPList({
   }, [])
 
   const rawOrigin = mounted && typeof window !== 'undefined' ? window.location.origin : ''
-  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://oliviaandjonah.xyz')
+  const origin = rawOrigin.replace(/^https?:\/\/localhost(:\d+)?/, 'https://weddingrsvp.vercel.app')
 
   const copyToClipboard = (text: string, guestNames: string) => {
     navigator.clipboard.writeText(text)
